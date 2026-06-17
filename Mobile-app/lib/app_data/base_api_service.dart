@@ -31,8 +31,15 @@ class ApiService {
         ),
       );
       return response;
-    } catch (e) {
-      print("GET Raw error: $e");
+    } catch (e, stackTrace) {
+      print("❌ GET ERROR: $e");
+      print("📛 STACK: $stackTrace");
+
+      if (e is DioException) {
+        print("❌ DIO ERROR: ${e.response?.data}");
+        print("❌ STATUS: ${e.response?.statusCode}");
+      }
+
       return null;
     }
   }

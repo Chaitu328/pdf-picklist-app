@@ -53,9 +53,10 @@ class RegisterVillageController extends GetxController {
       if (response != null && response.statusCode == 200) {
         final data = response.data as List<dynamic>;
         final all = data
-            .map((item) =>
-            PickListModel.fromJson(item as Map<String, dynamic>))
+            .map((item) => PickListModel.fromJson(item as Map<String, dynamic>))
             .toList();
+        print("API CALLED");
+        print(response.data);
 
         // ── Filter out permanently deleted IDs ──
         // Even after pull-to-refresh, deleted items never come back
@@ -77,60 +78,40 @@ class RegisterVillageController extends GetxController {
   // On success: adds to _deletedIds + removes from UI instantly
   // On refresh: _deletedIds filter blocks it from ever coming back
   // ════════════════════════════════════════════════════════
-  Future<void> deletePickList(String id) async {
-    try {
-      final token = loginController.token.value;
+// 2. Perform the server-side deletion
+Future<void> deletePickList(int index) async {
+  try {
+    // 1. Get the item from the list using the index
+    final item = pickLists[index];
+    final String pNo = item.pickListNo; // The "code" the API wants
+    final String internalId = item.id;   // The "_id" we use for UI logic
 
-      // ── Call the static delete method on PickListModel ──
-      final success = await PickListModel.delete(id, token);
+    final token = loginController.token.value;
 
-      if (success) {
-        // ── Step 1: Remember this ID permanently this session ──
-        _deletedIds.add(id);
-
-        // ── Step 2: Remove from UI by item.id — never stale ──
-        pickLists.removeWhere((item) => item.id == id);
-        pickLists.refresh();
-
-        Get.snackbar(
-          'Deleted',
-          'Pick list removed successfully',
-          backgroundColor: const Color(0xFF1A8A4A).withOpacity(0.9),
-          colorText: Colors.white,
-          icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 14,
-          duration: const Duration(seconds: 2),
-        );
-      } else {
-        Get.snackbar(
-          'Error',
-          'Failed to delete pick list. Please try again.',
-          backgroundColor: const Color(0xFFE74C3C).withOpacity(0.9),
-          colorText: Colors.white,
-          icon: const Icon(Icons.error_outline_rounded, color: Colors.white),
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 14,
-        );
-      }
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Something went wrong: $e',
-        backgroundColor: const Color(0xFFE74C3C).withOpacity(0.9),
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 14,
-      );
+    if (token.isEmpty) {
+      Get.snackbar("Error", "No token found");
+      return;
     }
-  }
 
+    // 2. Call API using pick_list_no
+    final success = await PickListModel.delete(pNo, token);
+
+    if (success) {
+      // 3. Remove from UI list using the internal ID
+      pickLists.removeWhere((element) => element.id == internalId);
+      Get.snackbar("Success", "Pick List $pNo deleted");
+    } else {
+      Get.snackbar("Error", "Failed to delete $pNo. Check if it exists.");
+    }
+  } catch (e) {
+    print("Error: $e");
+  }
+}
+  
   // ════════════════════════════════════════════════════════
   // VALIDATE & REGISTER
   // ════════════════════════════════════════════════════════
+
   bool validate() {
     bool isValid = true;
 

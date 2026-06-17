@@ -56,9 +56,10 @@ class PickListModel {
   factory PickListModel.fromJson(Map<String, dynamic> json) {
     return PickListModel(
       id: json['_id'] as String? ?? '',
-      pickListNo: (json['pick_list_no'] as String?)?.isNotEmpty == true
-          ? json['pick_list_no'] as String
-          : (json['code'] as String? ?? ''),
+      pickListNo: json['pick_list_no'],
+      // pickListNo: (json['pick_list_no'] as String?)?.isNotEmpty == true
+      //     ? json['pick_list_no'] as String
+      //     : (json['code'] as String? ?? ''),
       orderNo: json['order_no'] as String? ?? '',
       clientId: json['clientId'] != null
           ? ClientWorkerInfo.fromJson(
@@ -114,33 +115,26 @@ class PickListModel {
   // ───────────────────────────────────────────────────────────────────────────
   // DELETE  →  DELETE $baseURL/picklist/delete/{id}
   // ───────────────────────────────────────────────────────────────────────────
-  static Future<bool> delete(String id, String token) async {
-    try {
-      final url = '${ApiConstants.deletePickList}$id';
-      print('[PickList] DELETE $url');
+static Future<bool> delete(String pickListNo, String token) async {
+  try {
+    // The API requires the pick_list_no in the URL
+    final response = await http.delete(
+      Uri.parse('https://pick-list.onrender.com/api/picklist/$pickListNo'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
 
-      final response = await http.delete(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+    print("DELETE STATUS: ${response.statusCode}");
+    print("DELETE URL: https://pick-list.onrender.com/api/picklist/$pickListNo");
 
-      print('[PickList] ${response.statusCode} ${response.body}');
-
-      if (response.statusCode == 200 ||
-          response.statusCode == 201 ||
-          response.statusCode == 204) {
-        _persistDeletedId(id);
-        return true;
-      }
-      return false;
-    } catch (e) {
-      print('[PickList] delete error: $e');
-      return false;
-    }
+    return response.statusCode == 200 || response.statusCode == 204;
+  } catch (e) {
+    print("DELETE ERROR: $e");
+    return false;
   }
+}
 }
 
 // ═════════════════════════════════════════════════════════════════════════════

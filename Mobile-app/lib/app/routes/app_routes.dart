@@ -19,7 +19,7 @@ class AppRoutes {
 
   static List<GetPage> getPages = [
     GetPage(name: splash, page: () => SplashView()),
-    GetPage(name: login, page: () => const LoginView()),
+    GetPage(name: login, page: () => const LoginView(),binding: LoginBinding(),),
     GetPage(name: register, page: () => RegisterView()),
     GetPage(name: bottomMain, page: () => BottomMainBar()),
     GetPage(name: registerVillage, page: () => ViewPickList()),

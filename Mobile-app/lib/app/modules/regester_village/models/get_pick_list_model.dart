@@ -28,8 +28,8 @@ String _clean(dynamic v) {
   return v
       .toString()
       .replaceAll('\r\n', '') // Windows line endings first
-      .replaceAll('\r', '')   // old Mac line endings
-      .replaceAll('\n', '')   // Unix/PDF line endings  ← THE MAIN FIX
+      .replaceAll('\r', '') // old Mac line endings
+      .replaceAll('\n', '') // Unix/PDF line endings  ← THE MAIN FIX
       .trim();
 }
 
@@ -73,8 +73,8 @@ class PickListModel {
           : null,
       status: json['status'] as String? ?? 'unassigned',
       parts: (json['parts'] as List<dynamic>?)
-          ?.map((e) => PartModel.fromJson(e as Map<String, dynamic>))
-          .toList() ??
+              ?.map((e) => PartModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
           [],
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -83,18 +83,17 @@ class PickListModel {
   }
 
   Map<String, dynamic> toJson() => {
-    '_id': id,
-    'pick_list_no': pickListNo,
-    'order_no': orderNo,
-    'clientId': clientId?.toJson(),
-    'workerId': workerId?.toJson(),
-    'status': status,
-    'parts': parts.map((e) => e.toJson()).toList(),
-    'createdAt': createdAt.toIso8601String(),
-  };
+        '_id': id,
+        'pick_list_no': pickListNo,
+        'order_no': orderNo,
+        'clientId': clientId?.toJson(),
+        'workerId': workerId?.toJson(),
+        'status': status,
+        'parts': parts.map((e) => e.toJson()).toList(),
+        'createdAt': createdAt.toIso8601String(),
+      };
 
-  String? get code => null;
-  get pickListCode => null;
+   String get pickListCode => pickListNo;
 
   // ──────────────────────────────────────────────────────────────────────────
   // PERSISTED DELETED IDs
@@ -114,26 +113,21 @@ class PickListModel {
     print('[PickList] Persisted deleted id: $id — total: ${current.length}');
   }
 
-  static Future<bool> delete(String id, String token) async {
+  static Future<bool> delete(String pickListNo, String token) async {
     try {
-      final url = ApiConstants.deletePickList;
       final response = await http.delete(
-        Uri.parse(url),
+        Uri.parse('https://pick-list.onrender.com/api/picklist/$pickListNo'),
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
       );
-      if (response.statusCode == 200 ||
-          response.statusCode == 201 ||
-          response.statusCode == 204) {
-        _persistDeletedId(id);
-        return true;
-      }
-      print('[PickList] Delete failed: ${response.statusCode} - ${response.body}');
-      return false;
+
+      print("DELETE STATUS: ${response.statusCode}");
+      print("DELETE BODY: ${response.body}");
+
+      return response.statusCode == 200;
     } catch (e) {
-      print('[PickList] Delete error: $e');
+      print("DELETE ERROR: $e");
       return false;
     }
   }
@@ -180,12 +174,12 @@ class PartModel {
 
   PartModel({
     required this.id,
-    required String partno,          // constructor param named partno
+    required String partno, // constructor param named partno
     required this.description,
     required this.reqQty,
     required this.alloQty,
     required this.status,
-  }) : _partnoRaw = partno;          // stored in private field
+  }) : _partnoRaw = partno; // stored in private field
 
   factory PartModel.fromJson(Map<String, dynamic> json) {
     final raw = json['partno']?.toString() ?? '';
@@ -199,21 +193,21 @@ class PartModel {
     }
 
     return PartModel(
-      id:          json['_id']         as String? ?? '',
-      partno:      clean,              // ✅ clean value stored
+      id: json['_id'] as String? ?? '',
+      partno: clean, // ✅ clean value stored
       description: json['description'] as String? ?? '',
-      reqQty:      (json['req_qty']    as num?)?.toInt() ?? 0,
-      alloQty:     (json['allo_qty']   as num?)?.toInt() ?? 0,
-      status:      json['status']      as String? ?? 'pending',
+      reqQty: (json['req_qty'] as num?)?.toInt() ?? 0,
+      alloQty: (json['allo_qty'] as num?)?.toInt() ?? 0,
+      status: json['status'] as String? ?? 'pending',
     );
   }
 
   Map<String, dynamic> toJson() => {
-    '_id':         id,
-    'partno':      partno,       // uses the clean getter
-    'description': description,
-    'req_qty':     reqQty,
-    'allo_qty':    alloQty,
-    'status':      status,
-  };
+        '_id': id,
+        'partno': partno, // uses the clean getter
+        'description': description,
+        'req_qty': reqQty,
+        'allo_qty': alloQty,
+        'status': status,
+      };
 }

@@ -8,12 +8,19 @@ import '../../../../common_widgets/common_buttons/elevated_button_common.dart';
 import '../../../../common_widgets/common_textfields/text_field_common.dart';
 import '../controllers/login_controller.dart';
 
+class LoginBinding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => LoginController());
+  }
+}
+
 class LoginView extends GetView<LoginController> {
   const LoginView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(LoginController());
+    // final controller = Get.put(LoginController());
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: AppColor.cAppPrimaryColor,
@@ -45,16 +52,18 @@ class LoginView extends GetView<LoginController> {
 
                   // Email Field
                   Obx(
-                        () => TextField(
-                      controller: controller.emailController.value,
+                    () => TextField(
+                      controller: controller.emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: 'email',
                         errorText: controller.emailError.value.isNotEmpty
                             ? controller.emailError.value
                             : null,
-                        labelStyle: TextStyle(color: AppColor.cPrimaryButtonColor),
-                        prefixIcon: Icon(Icons.email, color: AppColor.cPrimaryButtonColor),
+                        labelStyle:
+                            TextStyle(color: AppColor.cPrimaryButtonColor),
+                        prefixIcon: Icon(Icons.email,
+                            color: AppColor.cPrimaryButtonColor),
                         border: const OutlineInputBorder(),
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(
@@ -69,16 +78,18 @@ class LoginView extends GetView<LoginController> {
 
                   // Password Field
                   Obx(
-                        () => TextField(
-                      controller: controller.passwordController.value,
+                    () => TextField(
+                      controller: controller.passwordController,
                       obscureText: !controller.isPasswordVisible.value,
                       decoration: InputDecoration(
                         labelText: 'password',
                         errorText: controller.passwordError.value.isNotEmpty
                             ? controller.passwordError.value
                             : null,
-                        labelStyle: TextStyle(color: AppColor.cPrimaryButtonColor),
-                        prefixIcon: Icon(Icons.lock, color: AppColor.cPrimaryButtonColor),
+                        labelStyle:
+                            TextStyle(color: AppColor.cPrimaryButtonColor),
+                        prefixIcon: Icon(Icons.lock,
+                            color: AppColor.cPrimaryButtonColor),
                         suffixIcon: IconButton(
                           icon: Icon(
                             controller.isPasswordVisible.value
@@ -145,31 +156,34 @@ class LoginView extends GetView<LoginController> {
 
                   // Login Button
                   Obx(
-                        () => ElevatedButtonCommon(
+                    () => ElevatedButtonCommon(
                       onTap: controller.isLoading.value
                           ? null
                           : () {
-                        if (!isChecked.value) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please accept the terms and conditions'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        } else {
-                          if (controller.emailController.value.text.isNotEmpty &&
-                              controller.passwordController.value.text.isNotEmpty) {
-                            controller.verifyEmailPassword(context);
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Please fill all fields'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        }
-                      },
+                              if (!isChecked.value) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'Please accept the terms and conditions'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              } else {
+                                if (controller.emailController.value.text
+                                        .isNotEmpty &&
+                                    controller.passwordController.value.text
+                                        .isNotEmpty) {
+                                  controller.verifyEmailPassword(context);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Please fill all fields'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
                       buttonColor: AppColor.cPrimaryButtonColor,
                       buttonText: "Login",
                     ),

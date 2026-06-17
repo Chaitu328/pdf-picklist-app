@@ -19,13 +19,13 @@ const _kWhite06 = Color(0x0FFFFFFF);
 const _kWhite10 = Color(0x1AFFFFFF);
 const _kWhite18 = Color(0x2EFFFFFF);
 
-const _kTextPrimary   = Color(0xFFECEEF4);
+const _kTextPrimary = Color(0xFFECEEF4);
 const _kTextSecondary = Color(0xFF8B92A9);
-const _kTextDim       = Color(0xFF4A5068);
+const _kTextDim = Color(0xFF4A5068);
 
 const _kGreen = Color(0xFF2ECC71);
 const _kAmber = Color(0xFFF39C12);
-const _kBlue  = Color(0xFF4FC3F7);
+const _kBlue = Color(0xFF4FC3F7);
 
 const _kAccents = <List<Color>>[
   [Color(0xFF6C63FF), Color(0xFF3ECFCF)],
@@ -35,8 +35,7 @@ const _kAccents = <List<Color>>[
   [Color(0xFF9B8FFF), Color(0xFF3ECFCF)],
 ];
 
-List<Color> _cardAccent(int index) =>
-    _kAccents[index % _kAccents.length];
+List<Color> _cardAccent(int index) => _kAccents[index % _kAccents.length];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN VIEW
@@ -188,7 +187,7 @@ class WorkerMyListsView extends GetView<WorkerController> {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 32),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
-                    (ctx, i) => Padding(
+                (ctx, i) => Padding(
                   padding: const EdgeInsets.only(bottom: 18),
                   child: _MyPickListCard(
                     pickList: lists[i],
@@ -250,22 +249,25 @@ class _SummaryBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total      = lists.length;
+    final total = lists.length;
     final processing = lists.where((l) => l.status == 'processing').length;
-    final assigned   = lists.where((l) => l.status == 'assigned').length;
-    final completed  = lists.where((l) => l.status == 'completed').length;
+    final assigned = lists.where((l) => l.status == 'assigned').length;
+    final completed = lists.where((l) => l.status == 'completed').length;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          _SummaryPill(label: 'Total',    value: '$total',      colors: _kAccents[0]),
+          _SummaryPill(label: 'Total', value: '$total', colors: _kAccents[0]),
           const SizedBox(width: 8),
-          _SummaryPill(label: 'Active',   value: '$processing', colors: _kAccents[1]),
+          _SummaryPill(
+              label: 'Active', value: '$processing', colors: _kAccents[1]),
           const SizedBox(width: 8),
-          _SummaryPill(label: 'Assigned', value: '$assigned',   colors: _kAccents[2]),
+          _SummaryPill(
+              label: 'Assigned', value: '$assigned', colors: _kAccents[2]),
           const SizedBox(width: 8),
-          _SummaryPill(label: 'Done',     value: '$completed',  colors: _kAccents[3]),
+          _SummaryPill(
+              label: 'Done', value: '$completed', colors: _kAccents[3]),
         ],
       ),
     );
@@ -391,8 +393,7 @@ class _LoadingStateState extends State<_LoadingState>
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
-                        color: _kAccents[0][0]
-                            .withOpacity(0.4 * _pulse.value),
+                        color: _kAccents[0][0].withOpacity(0.4 * _pulse.value),
                         blurRadius: 22,
                         spreadRadius: 3,
                       ),
@@ -500,6 +501,9 @@ class _MyPickListCardState extends State<_MyPickListCard>
   late AnimationController _entranceCtrl;
   late Animation<double> _fadeSlide;
 
+  // 1. ADD STATE FOR EXPANSION
+  bool _isExpanded = false;
+
   @override
   void initState() {
     super.initState();
@@ -513,7 +517,7 @@ class _MyPickListCardState extends State<_MyPickListCard>
     );
     Future.delayed(
       Duration(milliseconds: widget.index * 100),
-          () {
+      () {
         if (mounted) _entranceCtrl.forward();
       },
     );
@@ -527,10 +531,10 @@ class _MyPickListCardState extends State<_MyPickListCard>
 
   @override
   Widget build(BuildContext context) {
-    final p      = widget.pickList;
+    final p = widget.pickList;
     final colors = _cardAccent(widget.index);
 
-    final bool isCompleted  = p.status == 'completed';
+    final bool isCompleted = p.status == 'completed';
     final bool isProcessing = p.status == 'processing';
 
     final Color statusColor;
@@ -539,15 +543,15 @@ class _MyPickListCardState extends State<_MyPickListCard>
 
     if (isCompleted) {
       statusColor = _kGreen;
-      statusIcon  = Icons.check_circle_rounded;
+      statusIcon = Icons.check_circle_rounded;
       statusLabel = 'Completed';
     } else if (isProcessing) {
       statusColor = _kBlue;
-      statusIcon  = Icons.sync_rounded;
+      statusIcon = Icons.sync_rounded;
       statusLabel = 'Processing';
     } else {
       statusColor = _kAmber;
-      statusIcon  = Icons.assignment_ind_rounded;
+      statusIcon = Icons.assignment_ind_rounded;
       statusLabel = p.status.capitalizeFirst ?? p.status;
     }
 
@@ -571,12 +575,6 @@ class _MyPickListCardState extends State<_MyPickListCard>
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
-            BoxShadow(
-              color: colors[0].withOpacity(0.08),
-              blurRadius: 28,
-              spreadRadius: 1,
-              offset: const Offset(0, 4),
-            ),
           ],
         ),
         child: Column(
@@ -585,7 +583,7 @@ class _MyPickListCardState extends State<_MyPickListCard>
             // top accent bar
             ClipRRect(
               borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(22)),
+                  const BorderRadius.vertical(top: Radius.circular(22)),
               child: Container(
                 height: 3,
                 decoration: BoxDecoration(
@@ -594,235 +592,87 @@ class _MyPickListCardState extends State<_MyPickListCard>
               ),
             ),
 
-            // header
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    colors[0].withOpacity(0.12),
-                    colors[1].withOpacity(0.05),
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
+            // 2. HEADER (TAP TO TOGGLE)
+            GestureDetector(
+              onTap: () => setState(() => _isExpanded = !_isExpanded),
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      colors[0].withOpacity(0.12),
+                      colors[1].withOpacity(0.05),
+                    ],
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  // pick list number badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: colors),
-                      borderRadius: BorderRadius.circular(9),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors[0].withOpacity(0.45),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: colors),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Text(
+                        p.pickListNo,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
                         ),
-                      ],
-                    ),
-                    child: Text(
-                      p.pickListNo,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 13,
-                        letterSpacing: 0.5,
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                  // status chip
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 11, vertical: 6),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          statusColor.withOpacity(0.18),
-                          statusColor.withOpacity(0.08),
+                    const Spacer(),
+                    // Status Chip
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 11, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: statusColor.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(statusIcon, size: 12, color: statusColor),
+                          const SizedBox(width: 5),
+                          Text(
+                            statusLabel,
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: statusColor,
+                                fontWeight: FontWeight.w700),
+                          ),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: statusColor.withOpacity(0.38)),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(statusIcon, size: 12, color: statusColor),
-                        const SizedBox(width: 5),
-                        Text(
-                          statusLabel,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: statusColor,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ],
+                    const SizedBox(width: 10),
+                    // 3. EXPAND/COLLAPSE INDICATOR
+                    Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: _kTextSecondary,
+                      size: 20,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
-            // body
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // manager info
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 9),
-                    decoration: BoxDecoration(
-                      color: _kWhite06,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: _kWhite10),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: colors),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(Icons.person_rounded,
-                              size: 14, color: Colors.white),
-                        ),
-                        const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Manager',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: _kTextDim,
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: 0.3,
-                              ),
-                            ),
-                            Text(
-                              p.clientId?.email ?? '—',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: _kTextPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // parts header
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: colors
-                                .map((c) => c.withOpacity(0.15))
-                                .toList(),
-                          ),
-                          borderRadius: BorderRadius.circular(7),
-                          border: Border.all(
-                              color: colors[0].withOpacity(0.25)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.inventory_2_rounded,
-                                size: 12,
-                                color: colors[0].withOpacity(0.9)),
-                            const SizedBox(width: 5),
-                            Text(
-                              'PARTS',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: colors[0].withOpacity(0.9),
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _kWhite06,
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        child: Text(
-                          '${p.parts.length}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  // parts list
-                  ...p.parts.map(
-                        (part) => _PartTile(part: part, accentColors: colors),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // date
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _kWhite06,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.access_time_rounded,
-                            size: 11, color: _kTextDim),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatDate(p.createdAt),
-                          style: const TextStyle(
-                              fontSize: 11, color: _kTextDim),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // submit button
-                  if (p.status != 'completed') ...[
-                    const SizedBox(height: 14),
-                    _SubmitButton(
-                      colors: colors,
-                      onTap: widget.onSubmit,
-                    ),
-                  ],
-                ],
-              ),
+            // 4. ANIMATED BODY
+            AnimatedCrossFade(
+              firstChild:
+                  const SizedBox(width: double.infinity), // Collapsed state
+              secondChild: _buildExpandedContent(p, colors), // Expanded state
+              crossFadeState: _isExpanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 300),
             ),
           ],
         ),
@@ -830,17 +680,125 @@ class _MyPickListCardState extends State<_MyPickListCard>
     );
   }
 
+  Widget _buildExpandedContent(PickListModel p, List<Color> colors) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 14),
+          // Manager Info
+          _buildManagerInfo(p, colors),
+          const SizedBox(height: 14),
+          // Parts Section
+          _buildPartsHeader(p, colors),
+          const SizedBox(height: 10),
+          ...p.parts.map((part) => _PartTile(part: part, accentColors: colors)),
+          const SizedBox(height: 10),
+          // Date
+          _buildDateRow(p),
+          // Submit Button
+          if (p.status != 'completed') ...[
+            const SizedBox(height: 14),
+            _SubmitButton(
+              colors: colors,
+              onTap: widget.onSubmit,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // Refactored UI helpers to keep the code clean
+  Widget _buildManagerInfo(PickListModel p, List<Color> colors) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: _kWhite06,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _kWhite10),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: colors),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child:
+                const Icon(Icons.person_rounded, size: 14, color: Colors.white),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Manager',
+                  style: TextStyle(fontSize: 10, color: _kTextDim)),
+              Text(p.clientId?.email ?? '—',
+                  style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _kTextPrimary)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPartsHeader(PickListModel p, List<Color> colors) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: colors[0].withOpacity(0.15),
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(color: colors[0].withOpacity(0.25)),
+          ),
+          child: Text('PARTS',
+              style: TextStyle(
+                  fontSize: 10, fontWeight: FontWeight.w800, color: colors[0])),
+        ),
+        const SizedBox(width: 8),
+        Text('${p.parts.length}',
+            style: const TextStyle(fontSize: 11, color: Colors.white70)),
+      ],
+    );
+  }
+
+  Widget _buildDateRow(PickListModel p) {
+    return Row(
+      children: [
+        const Icon(Icons.access_time_rounded, size: 11, color: _kTextDim),
+        const SizedBox(width: 4),
+        Text(_formatDate(p.createdAt),
+            style: const TextStyle(fontSize: 11, color: _kTextDim)),
+      ],
+    );
+  }
+
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}  '
-        '${date.hour.toString().padLeft(2, '0')}:'
-        '${date.minute.toString().padLeft(2, '0')}';
+    return '${date.day} ${months[date.month - 1]} ${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // PART TILE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -853,7 +811,7 @@ class _PartTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool done   = part.status == 'completed';
+    final bool done = part.status == 'completed';
     final Color accent = done ? _kGreen : _kAmber;
     final List<Color> barColors = done
         ? [const Color(0xFF1A8A4A), _kGreen]
@@ -906,8 +864,7 @@ class _PartTile extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   part.partno,
-                  style: const TextStyle(
-                      fontSize: 11, color: _kTextDim),
+                  style: const TextStyle(fontSize: 11, color: _kTextDim),
                 ),
               ],
             ),
@@ -922,10 +879,7 @@ class _PartTile extends StatelessWidget {
                   value: '${part.reqQty}',
                   color: _kTextSecondary),
               const SizedBox(height: 4),
-              _QtyRow(
-                  label: 'Allo',
-                  value: '${part.alloQty}',
-                  color: accent),
+              _QtyRow(label: 'Allo', value: '${part.alloQty}', color: accent),
             ],
           ),
           const SizedBox(width: 10),
@@ -971,9 +925,7 @@ class _QtyRow extends StatelessWidget {
         Text(
           '$label ',
           style: const TextStyle(
-              fontSize: 10,
-              color: _kTextDim,
-              fontWeight: FontWeight.w500),
+              fontSize: 10, color: _kTextDim, fontWeight: FontWeight.w500),
         ),
         Text(
           value,

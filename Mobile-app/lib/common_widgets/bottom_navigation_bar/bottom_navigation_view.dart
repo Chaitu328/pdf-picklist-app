@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../app/modules/home/views/pick_list_view.dart';
 import '../../app/modules/profile/views/profile_view.dart';
-import '../../app/modules/regester_village/views/picklist_view.dart' hide PickListView;
+import '../../app/modules/regester_village/views/picklist_view.dart'
+    hide PickListView;
 import '../../app/modules/worker/controllers/worker_controller.dart';
 import '../../app/modules/worker/views/worker_available_view.dart';
 import '../../app/modules/worker/views/worker_my_lists_view.dart';
@@ -23,12 +24,14 @@ class BottomMainBar extends StatelessWidget {
 
     if (!isManager) {
       Get.put(WorkerController());
+      print("Current Role: $role");
     }
 
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Colors.transparent, // ✅ transparent lets Flutter control it
+      systemNavigationBarColor:
+          Colors.transparent, // ✅ transparent lets Flutter control it
       systemNavigationBarIconBrightness: Brightness.light,
     ));
 
@@ -56,7 +59,7 @@ class BottomMainBar extends StatelessWidget {
             currentPage = const PickListView();
             break;
           case 1:
-            currentPage =  ViewPickList();
+            currentPage = ViewPickList();
             break;
           default:
             currentPage = ProfileView();
@@ -165,9 +168,8 @@ class _CustomBottomBar extends StatelessWidget {
                           navItems[index].label,
                           style: TextStyle(
                             fontSize: 11,
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w400,
+                            fontWeight:
+                                isSelected ? FontWeight.w700 : FontWeight.w400,
                             color: isSelected
                                 ? Colors.white
                                 : Colors.white.withOpacity(0.5),

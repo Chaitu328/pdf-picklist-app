@@ -33,11 +33,16 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
   bool _scannerOpen = false;
   MobileScannerController? _scannerController;
   bool _isProcessing = false;
+  bool _isSubmitted = false;
 
   // ── Overlay states ────────────────────────────────────────────────────────
   bool _showSuccessOverlay = false;
   bool _showInvalidOverlay = false;
   bool _showLimitOverlay = false;
+
+
+  int _overlayScannedQty = 0;
+  int _overlayAllocatedQty = 0;
 
   String _overlayMessage = '';
   String _scannedRawValue = '';
@@ -45,7 +50,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
 
   // ── Per-part counters ─────────────────────────────────────────────────────
   late List<int> _scanCounts; // current allocated qty per part
-  late List<int> _reqCounts;  // required qty per part
+  late List<int> _reqCounts; // required qty per part
 
   @override
   void initState() {
@@ -53,7 +58,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
     pickList = Get.arguments as PickListModel;
     _alloControllers = pickList.parts
         .map((p) => TextEditingController(
-        text: p.alloQty > 0 ? p.alloQty.toString() : ''))
+            text: p.alloQty > 0 ? p.alloQty.toString() : ''))
         .toList();
     _scanCounts =
         pickList.parts.map((p) => p.alloQty > 0 ? p.alloQty : 0).toList();
@@ -77,6 +82,24 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
 
   void _syncController(int index) {
     _alloControllers[index].text = _scanCounts[index].toString();
+  }
+
+  bool _isFormValid() {
+    for (int i = 0; i < _alloControllers.length; i++) {
+      final text = _alloControllers[i].text.trim();
+
+      // ❌ empty
+      if (text.isEmpty) return false;
+
+      final value = int.tryParse(text) ?? 0;
+
+      // ❌ zero or invalid
+      if (value <= 0) return false;
+
+      // ❌ more than required
+      if (value > _reqCounts[i]) return false;
+    }
+    return true;
   }
 
   // ── Scanner open / close ──────────────────────────────────────────────────
@@ -136,66 +159,310 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
   //  QR qty (segment[5]) is intentionally ignored
   // ══════════════════════════════════════════════════════════════════════════
 
-  void _parseAndIncrement(String raw) {
+// ══════════════════════════════════════════════════════════════════════════
+//  CORE LOGIC: Simplified for Non-Educational Users
+// ══════════════════════════════════════════════════════════════════════════
+
+void _parseAndIncrement(String raw) {
     final segments = raw.split('/');
 
-    // Need at least 4 segments to reach part number at index 3
-    if (segments.length < 4) {
-      _handleInvalidScan(
-          'Unrecognised QR format.\nExpected "/" separated fields.\n\nExample: D/DOC/REF/PARTNO/SEQ/QTY');
+    print("=========== FULL QR RAW ===========");
+    print(raw);
+
+    print("=========== SEGMENTS ===========");
+    for (int i = 0; i < segments.length; i++) {
+      print("SEGMENT[$i]: ${segments[i]}");
+    }
+    print("=================================");
+
+    if (segments.length < 6) {
+      _showStatusOverlay(status: "Invalid QR", color: Colors.red);
       return;
     }
 
-    // Extract part number from segment[3]
-    final partno = segments[3].trim();
-    if (partno.isEmpty) {
-      _handleInvalidScan('Part number field (position 4) is empty in this QR.');
-      return;
-    }
+    final String uniqueId = segments[2].trim();
+    final String partno = segments[3].trim();
 
-    // Find matching part in pick list
-    final idx = _partIndexByPartNo(partno);
+    // ✅ CORRECT NET QTY FROM SEGMENT[4]
+    final rawQty = segments[4].trim(); // "000040"
+
+    print("RAW NET QTY (SEGMENT[4]): $rawQty");
+
+    // ✅ Convert "000040" → 40
+    final int qrNetQty = int.tryParse(rawQty) ?? 0;
+
+    print("PARSED NET QTY: $qrNetQty");
+
+    final int idx = _partIndexByPartNo(partno);
+
     if (idx == -1) {
-      _handleInvalidScan(
-          'Part "$partno" was not found in this pick list.');
+      _showStatusOverlay(status: "Part Not Found", color: Colors.red);
       return;
     }
 
-    // Already at required qty? Block scan
-    if (_isLimitReached(idx)) {
-      _handleLimitReached(idx);
-      return;
+    final int requiredQty = _reqCounts[idx];
+
+    // show in UI
+    _overlayScannedQty = qrNetQty;
+    _overlayAllocatedQty = requiredQty;
+
+    // ✅ MATCH LOGIC
+    if (qrNetQty == requiredQty) {
+      _handleQtyMatchSuccess(idx, qrNetQty, uniqueId);
+    } else {
+      _showStatusOverlay(status: "Shortage", color: Colors.orange);
     }
+  }
+// ══════════════════════════════════════════════════════════════════════════
+//  UNIVERSAL SIMPLE OVERLAY (Replaces all specific overlays)
+// ══════════════════════════════════════════════════════════════════════════
 
-    // ── INCREMENT by +1 ───────────────────────────────────────────────────
-    _scanCounts[idx] += 1;
-    _syncController(idx);
+  bool _isOverlayVisible = false;
+  String _currentStatusText = "";
+  Color _currentStatusColor = Colors.grey;
 
-    // If this scan just hit the limit, show limit overlay instead of success
-    if (_isLimitReached(idx)) {
-      setState(() {
-        _overlayMessage =
-        '"${pickList.parts[idx].description}" has now reached '
-            'its required quantity (${_reqCounts[idx]}).';
-        _showLimitOverlay = true;
-      });
-      return;
-    }
+  void _showStatusOverlay({required String status, required Color color}) {
+    _scannerController?.stop(); // ✅ IMPORTANT
+    setState(() {
+      _currentStatusText = status;
+      _currentStatusColor = color;
+      _isOverlayVisible = true;
 
-    // Show success overlay with updated values
-    _lastScanResults = [
-      _ScanResultItem(
-        partno: pickList.parts[idx].partno,
-        description: pickList.parts[idx].description,
-        alloQty: _scanCounts[idx],
-        reqQty: _reqCounts[idx],
-        updated: true,
-      ),
-    ];
-
-    setState(() => _showSuccessOverlay = true);
+      // Auto-hide these specific booleans from your old state
+      _showSuccessOverlay = false;
+      _showInvalidOverlay = false;
+      _showLimitOverlay = false;
+    });
   }
 
+  Widget _buildSimpleStatusOverlay() {
+    if (!_isOverlayVisible) return const SizedBox.shrink();
+
+    IconData statusIcon;
+    if (_currentStatusColor == Colors.green) {
+      statusIcon = Icons.check_circle_rounded;
+    } else if (_currentStatusColor == Colors.orange) {
+      statusIcon = Icons.warning_rounded;
+    } else {
+      statusIcon = Icons.cancel_rounded;
+    }
+
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withOpacity(0.85),
+        child: Center(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 40),
+            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(statusIcon, size: 100, color: _currentStatusColor),
+                const SizedBox(height: 20),
+                Text(
+                  _currentStatusText.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: _currentStatusColor,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+// ── QUANTITY COMPARISON BLOCK ─────────────────────────
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // ── SCANNED QTY ─────────────────────
+                      Column(
+                        children: [
+                          Text(
+                            "NET QTY",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _overlayScannedQty.toString(),
+                            style: TextStyle(
+                              fontSize: 42, // 🔥 BIG
+                              fontWeight: FontWeight.bold,
+                              color: _currentStatusColor,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // ── DIVIDER ─────────────────────────
+                      Container(
+                        height: 50,
+                        width: 1.5,
+                        color: Colors.grey.shade400,
+                      ),
+
+                      // ── ALLOCATED QTY ───────────────────
+                      Column(
+                        children: [
+                          Text(
+                            "REQUIRED",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _overlayAllocatedQty.toString(),
+                            style: const TextStyle(
+                              fontSize: 42, // 🔥 BIG
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+                const SizedBox(height: 40),
+                SizedBox(
+                  width: double.infinity,
+                  height: 60,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() => _isOverlayVisible = false);
+
+                      final String partno =
+                          _scannedRawValue.split('/')[3].trim();
+                      final int idx = _partIndexByPartNo(partno);
+
+                      if (idx == -1) {
+                        _rescan();
+                        return;
+                      }
+
+                      // ✅ MATCH CASE
+                      if (_currentStatusText == "MATCHED") {
+                        _closeScanner();
+                      }
+
+                      // ✅ SHORTAGE CASE (IMPORTANT 🔥)
+                      else if (_currentStatusText == "Shortage") {
+                        setState(() {
+                          // 🔥 Fill scanned NET QTY
+                          _scanCounts[idx] = _overlayScannedQty;
+                          _alloControllers[idx].text =
+                              _overlayScannedQty.toString();
+                        });
+
+                        _closeScanner();
+                      }
+
+                      // ❌ Other errors
+                      else {
+                        _rescan();
+                      }
+},
+                    // onPressed: () {
+                    //   setState(() => _isOverlayVisible = false);
+
+                    //   if (_currentStatusColor == Colors.green) {
+                    //     _closeScanner(); // ✅ close after success
+                    //   } else {
+                    //     _rescan(); // ❌ only for mismatch
+                    //   }
+                    // },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _currentStatusColor,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text(
+                      // _currentStatusColor == Colors.green ? "ADD" : "TRY AGAIN",
+                      (_currentStatusText == "MATCHED" ||
+                              _currentStatusText == "Shortage")
+                          ? "ADD"
+                          : "TRY AGAIN",
+                      style: const TextStyle(
+                        fontSize: 20,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: _closeScanner,
+                  child: const Text("CANCEL",
+                      style: TextStyle(color: Colors.grey, fontSize: 16)),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+// Case A: QTY MATCHES
+  void _handleQtyMatchSuccess(int idx, int matchedQty, String uniqueId) {
+    controller.updatePartStatus(
+      context: context,
+      pickListId: pickList.id,
+      partNo: pickList.parts[idx].partno,
+      isManual: false,
+      uniqueId: uniqueId,
+    );
+
+    setState(() {
+      _scanCounts[idx] = matchedQty;
+
+      // ✅ UPDATE TEXTFIELD DIRECTLY WITH NET QTY
+      _alloControllers[idx].text = matchedQty.toString();
+
+      _overlayScannedQty = matchedQty;
+      _overlayAllocatedQty = _reqCounts[idx];
+
+      // ✅ SHOW SUCCESS SCREEN WITH ADD BUTTON
+      _currentStatusText = "MATCHED";
+      _currentStatusColor = Colors.green;
+      _isOverlayVisible = true;
+    });
+  }
+
+// Case B: QTY MISMATCH
+  void _handleQtyMismatchError({
+    required String description,
+    required int required,
+    required int scanned,
+  }) {
+    setState(() {
+      _overlayMessage = "Quantity Mismatch for $description\n\n"
+          "Required: $required\n"
+          "Scanned QR says: $scanned\n\n"
+          "Please check the physical box again.";
+      _showInvalidOverlay = true;
+    });
+  }
   // ── Error / limit handlers ────────────────────────────────────────────────
 
   void _handleInvalidScan(String reason) {
@@ -208,7 +475,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
   void _handleLimitReached(int idx) {
     setState(() {
       _overlayMessage =
-      '"${pickList.parts[idx].description}" has already reached '
+          '"${pickList.parts[idx].description}" has already reached '
           'its required quantity (${_reqCounts[idx]}).\n\nScan a different part.';
       _showLimitOverlay = true;
     });
@@ -229,26 +496,42 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
 
   // ── Submit ────────────────────────────────────────────────────────────────
 
-  Future<void> _submit() async {
-    for (int i = 0; i < _alloControllers.length; i++) {
-      if (_alloControllers[i].text.trim().isEmpty) {
-        _showSnackbar(
-          message: 'Enter qty for: ${pickList.parts[i].description}',
-          color: Colors.redAccent,
-          icon: Icons.warning_amber_rounded,
-        );
-        return;
+Future<void> _submit() async {
+    if (controller.isLoading.value) return; // prevent double click
+
+    controller.isLoading.value = true; // 🔥 START LOADING IMMEDIATELY
+
+    try {
+    for (int i = 0; i < pickList.parts.length; i++) {
+      int enteredQty = int.tryParse(_alloControllers[i].text.trim()) ?? 0;
+      int alreadySavedQty = pickList.parts[i].alloQty;
+
+      if (enteredQty > alreadySavedQty) {
+        int needed = enteredQty - alreadySavedQty;
+
+        for (int j = 0; j < needed; j++) {
+          await controller.updatePartStatus(
+            pickListId: pickList.id,
+            partNo: pickList.parts[i].partno,
+            isManual: true,
+            context: context,
+          );
+        }
       }
     }
-    final List<Map<String, dynamic>> parts = [];
-    for (int i = 0; i < pickList.parts.length; i++) {
-      parts.add({
-        'partno': pickList.parts[i].partno,
-        'allo_qty': int.tryParse(_alloControllers[i].text.trim()) ?? 0,
-      });
+
+      await controller.fetchAllLists();
+
+      setState(() => _isSubmitted = true);
+
+      Get.back();
+    } catch (e) {
+      // handle error if needed
+    } finally {
+      controller.isLoading.value = false; // 🔥 STOP LOADING
     }
-    await controller.submitPickList(context, pickList.id, parts);
   }
+
 
   void _showSnackbar({
     required String message,
@@ -297,8 +580,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                     fontWeight: FontWeight.w700,
                     color: Colors.white)),
             Text('${pickList.parts.length} parts',
-                style: const TextStyle(
-                    fontSize: 11, color: Colors.white70)),
+                style: const TextStyle(fontSize: 11, color: Colors.white70)),
           ],
         ),
         actions: [
@@ -343,8 +625,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                     const Text(
                       'Each scan adds +1 to allocated quantity',
                       textAlign: TextAlign.center,
-                      style:
-                      TextStyle(color: Colors.white70, fontSize: 12),
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                     const SizedBox(height: 12),
                     _buildOverallProgressPill(),
@@ -356,14 +637,13 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
               Row(
                 children: [
                   Expanded(
-                      child: Container(
-                          height: 240, color: Colors.black45)),
+                      child: Container(height: 240, color: Colors.black45)),
                   Container(
                     width: 240,
                     height: 240,
                     decoration: BoxDecoration(
-                      border: Border.all(
-                          color: const Color(0xFF60A5FA), width: 3),
+                      border:
+                          Border.all(color: const Color(0xFF60A5FA), width: 3),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Stack(
@@ -392,8 +672,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                     ),
                   ),
                   Expanded(
-                      child: Container(
-                          height: 240, color: Colors.black45)),
+                      child: Container(height: 240, color: Colors.black45)),
                 ],
               ),
 
@@ -411,15 +690,13 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                           _scannerActionBtn(
                             icon: Icons.flash_on_rounded,
                             label: 'Torch',
-                            onTap: () =>
-                                _scannerController?.toggleTorch(),
+                            onTap: () => _scannerController?.toggleTorch(),
                           ),
                           const SizedBox(width: 28),
                           _scannerActionBtn(
                             icon: Icons.flip_camera_ios_rounded,
                             label: 'Flip',
-                            onTap: () =>
-                                _scannerController?.switchCamera(),
+                            onTap: () => _scannerController?.switchCamera(),
                           ),
                         ],
                       ),
@@ -448,10 +725,12 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
           ),
         ),
 
-        // ── Overlays ──────────────────────────────────────────────────────
-        if (_showSuccessOverlay) _buildSuccessOverlay(),
-        if (_showInvalidOverlay) _buildInvalidOverlay(),
-        if (_showLimitOverlay) _buildLimitOverlay(),
+        // // ── Overlays ──────────────────────────────────────────────────────
+        if (_isOverlayVisible) _buildSimpleStatusOverlay(),
+
+        // if (_showSuccessOverlay) _buildSuccessOverlay(),
+        // if (_showInvalidOverlay) _buildInvalidOverlay(),
+        // if (_showLimitOverlay) _buildLimitOverlay(),
       ],
     );
   }
@@ -501,16 +780,13 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.list_alt_rounded,
-              color: Colors.white, size: 14),
+          const Icon(Icons.list_alt_rounded, color: Colors.white, size: 14),
           const SizedBox(width: 8),
           Text(
             '$completed/${pickList.parts.length} parts complete'
-                ' · $totalAllo/$totalReq total',
+            ' · $totalAllo/$totalReq total',
             style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600),
+                color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -561,8 +837,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                         color: Color(0xFF16A34A))),
                 const SizedBox(height: 4),
                 const Text('Allocated quantity updated',
-                    style: TextStyle(
-                        fontSize: 13, color: Color(0xFF64748B))),
+                    style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
                 const SizedBox(height: 16),
 
                 // ── Updated parts list ───────────────────────────────────
@@ -624,15 +899,15 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
         color: r.error
             ? const Color(0xFFFEF2F2)
             : complete
-            ? const Color(0xFFF0FDF4)
-            : const Color(0xFFEFF6FF),
+                ? const Color(0xFFF0FDF4)
+                : const Color(0xFFEFF6FF),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: r.error
               ? const Color(0xFFFCA5A5)
               : complete
-              ? const Color(0xFF86EFAC)
-              : const Color(0xFF93C5FD),
+                  ? const Color(0xFF86EFAC)
+                  : const Color(0xFF93C5FD),
         ),
       ),
       child: Row(
@@ -641,9 +916,8 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
             decoration: BoxDecoration(
-              color: r.error
-                  ? const Color(0xFFDC2626)
-                  : const Color(0xFF16A34A),
+              color:
+                  r.error ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -669,8 +943,8 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                   r.error
                       ? r.partno
                       : '${r.partno}  •  Allo: ${r.alloQty} / Req: ${r.reqQty}',
-                  style: const TextStyle(
-                      fontSize: 10, color: Color(0xFF64748B)),
+                  style:
+                      const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
                 ),
               ],
             ),
@@ -703,9 +977,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
               minHeight: 4,
               backgroundColor: const Color(0xFFE2E8F0),
               valueColor: AlwaysStoppedAnimation<Color>(
-                pct >= 1.0
-                    ? const Color(0xFF16A34A)
-                    : const Color(0xFF2563EB),
+                pct >= 1.0 ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
               ),
             ),
           ),
@@ -745,8 +1017,8 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF7ED),
                     shape: BoxShape.circle,
-                    border: Border.all(
-                        color: const Color(0xFFFDBA74), width: 2),
+                    border:
+                        Border.all(color: const Color(0xFFFDBA74), width: 2),
                   ),
                   child: const Icon(Icons.qr_code_2_rounded,
                       color: Color(0xFFEA580C), size: 32),
@@ -769,8 +1041,8 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                   child: Text(
                     _overlayMessage,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 13, color: Color(0xFF92400E)),
+                    style:
+                        const TextStyle(fontSize: 13, color: Color(0xFF92400E)),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -869,8 +1141,8 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFFEF2F2),
                     shape: BoxShape.circle,
-                    border: Border.all(
-                        color: const Color(0xFFFCA5A5), width: 2),
+                    border:
+                        Border.all(color: const Color(0xFFFCA5A5), width: 2),
                   ),
                   child: const Icon(Icons.block_rounded,
                       color: Color(0xFFDC2626), size: 32),
@@ -893,8 +1165,8 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                   child: Text(
                     _overlayMessage,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 13, color: Color(0xFF7F1D1D)),
+                    style:
+                        const TextStyle(fontSize: 13, color: Color(0xFF7F1D1D)),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -1003,16 +1275,14 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                   const SizedBox(height: 2),
                   Text(
                     '$completed/${pickList.parts.length} complete'
-                        ' · $totalAllo/$totalReq qty',
-                    style: const TextStyle(
-                        color: Colors.white70, fontSize: 12),
+                    ' · $totalAllo/$totalReq qty',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -1067,15 +1337,14 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                 const SizedBox(height: 2),
                 Text(
                   pickList.clientId?.email ?? '—',
-                  style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF64748B)),
+                  style:
+                      const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                 ),
               ],
             ),
           ),
           Container(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: const Color(0xFFDCFCE7),
               borderRadius: BorderRadius.circular(20),
@@ -1132,13 +1401,12 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                 ),
                 alignment: Alignment.center,
                 child: limitReached
-                    ? const Icon(Icons.check,
-                    color: Colors.white, size: 14)
+                    ? const Icon(Icons.check, color: Colors.white, size: 14)
                     : Text('${index + 1}',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800)),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800)),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1153,20 +1421,18 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                         overflow: TextOverflow.ellipsis),
                     Text(part.partno,
                         style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF94A3B8))),
+                            fontSize: 11, color: Color(0xFF94A3B8))),
                   ],
                 ),
               ),
               if (limitReached)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF0FDF4),
                     borderRadius: BorderRadius.circular(20),
-                    border:
-                    Border.all(color: const Color(0xFF86EFAC)),
+                    border: Border.all(color: const Color(0xFF86EFAC)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1184,8 +1450,8 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                 )
               else if (hasProgress)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(20),
@@ -1203,8 +1469,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(
-                  child: _qtyBox(label: 'Required', value: '$req')),
+              Expanded(child: _qtyBox(label: 'Required', value: '$req')),
               const SizedBox(width: 10),
               Expanded(child: _alloQtyField(index)),
             ],
@@ -1219,8 +1484,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
   }
 
   Widget _buildInlineProgress(int scanned, int req, bool limitReached) {
-    final double progress =
-    req > 0 ? (scanned / req).clamp(0.0, 1.0) : 0.0;
+    final double progress = req > 0 ? (scanned / req).clamp(0.0, 1.0) : 0.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1231,9 +1495,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
             minHeight: 5,
             backgroundColor: const Color(0xFFE2E8F0),
             valueColor: AlwaysStoppedAnimation<Color>(
-              limitReached
-                  ? const Color(0xFF16A34A)
-                  : const Color(0xFF2563EB),
+              limitReached ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
             ),
           ),
         ),
@@ -1266,8 +1528,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
         const SizedBox(height: 5),
         Container(
           width: double.infinity,
-          padding:
-          const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(8),
@@ -1315,11 +1576,18 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
           child: TextFormField(
             controller: _alloControllers[index],
             keyboardType: TextInputType.number,
-            readOnly: limitReached,
+            // readOnly: limitReached,
+            readOnly: limitReached || _scanCounts[index] > 0,
             onChanged: (val) {
               final v = int.tryParse(val.trim()) ?? 0;
-              setState(() => _scanCounts[index] = v);
+              setState(() {
+                _scanCounts[index] = v;
+              });
             },
+            // onChanged: (val) {
+            //   final v = int.tryParse(val.trim()) ?? 0;
+            //   setState(() => _scanCounts[index] = v);
+            // },
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
@@ -1329,11 +1597,10 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
             decoration: const InputDecoration(
               isDense: true,
               contentPadding:
-              EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               border: InputBorder.none,
               hintText: '0',
-              hintStyle:
-              TextStyle(color: Color(0xFFCBD5E1), fontSize: 14),
+              hintStyle: TextStyle(color: Color(0xFFCBD5E1), fontSize: 14),
             ),
           ),
         ),
@@ -1343,7 +1610,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
 
   // ── Submit bar ────────────────────────────────────────────────────────────
 
-  Widget _buildSubmitBar() {
+Widget _buildSubmitBar() {
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
@@ -1356,57 +1623,61 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
                 offset: const Offset(0, -4)),
           ],
         ),
-        child: Obx(() => GestureDetector(
-          onTap: controller.isLoading.value ? null : _submit,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            height: 52,
-            decoration: BoxDecoration(
-              color: controller.isLoading.value
-                  ? Colors.grey.shade400
-                  : const Color(0xFF2563EB),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: controller.isLoading.value
-                  ? []
-                  : [
-                BoxShadow(
-                    color: const Color(0xFF2563EB)
-                        .withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4)),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (controller.isLoading.value)
-                  const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2))
-                else
-                  const Icon(Icons.check_circle_outline_rounded,
-                      color: Colors.white, size: 20),
-                const SizedBox(width: 10),
-                Text(
-                  controller.isLoading.value
-                      ? 'Submitting…'
-                      : 'Submit Pick List',
-                  style: const TextStyle(
+        child: Obx(() {
+          final bool isValid = _isFormValid();
+
+          final bool isDisabled =
+              (!isValid || _isSubmitted); // ❗ DON'T include loading here
+
+          return GestureDetector(
+            onTap: (isDisabled || controller.isLoading.value) ? null : _submit,
+            // onTap: isDisabled ? null : _submit, // ❗ disable click
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 52,
+              decoration: BoxDecoration(
+                color: controller.isLoading.value
+                    ? const Color(0xFF2563EB) // 🔵 keep blue during loading
+                    : isDisabled
+                        ? Colors.grey.shade400 // ⚪ disabled
+                        : const Color(0xFF2563EB),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (controller.isLoading.value)
+                    const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
+                  else
+                    Icon(
+                      isDisabled
+                          ? Icons.block
+                          : Icons.check_circle_outline_rounded,
                       color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3),
-                ),
-              ],
+                      size: 20,
+                    ),
+                  const SizedBox(width: 10),
+                  Text(
+                    controller.isLoading.value
+                        ? 'Submitting…'
+                        : 'Submit Pick List',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
             ),
-          ),
-        )),
+          );
+        }),
       ),
     );
   }
-
   // ── Shared helpers ────────────────────────────────────────────────────────
 
   Widget _overlayBtn({
@@ -1422,15 +1693,15 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
         color: color,
         borderRadius: BorderRadius.circular(12),
         border: border != null ? Border.all(color: border) : null,
-        boxShadow: color == const Color(0xFF2563EB) ||
-            color == const Color(0xFFEA580C)
-            ? [
-          BoxShadow(
-              color: color.withOpacity(0.35),
-              blurRadius: 8,
-              offset: const Offset(0, 4))
-        ]
-            : [],
+        boxShadow:
+            color == const Color(0xFF2563EB) || color == const Color(0xFFEA580C)
+                ? [
+                    BoxShadow(
+                        color: color.withOpacity(0.35),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4))
+                  ]
+                : [],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1441,9 +1712,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
           ],
           Text(label,
               style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                  color: textColor)),
+                  fontWeight: FontWeight.w700, fontSize: 14, color: textColor)),
         ],
       ),
     );
@@ -1470,8 +1739,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
           ),
           const SizedBox(height: 6),
           Text(label,
-              style: const TextStyle(
-                  color: Colors.white70, fontSize: 11)),
+              style: const TextStyle(color: Colors.white70, fontSize: 11)),
         ],
       ),
     );

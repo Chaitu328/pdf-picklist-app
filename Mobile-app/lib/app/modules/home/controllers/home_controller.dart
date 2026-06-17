@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -27,8 +28,27 @@ class UploadedDocument {
   });
 }
 
+class PickListItem {
+  final String id; // 🔥 ADD THIS
+  final String partNumber;
+  final String orderedBy;
+  final String allocatedBy;
+  final int requiredQty;
+
+  PickListItem({
+    required this.id,
+    required this.partNumber,
+    required this.orderedBy,
+    required this.allocatedBy,
+    required this.requiredQty,
+  });
+}
+
+final RxList<PickListItem> pickList = <PickListItem>[].obs;
+
 class HomeController extends GetxController {
-  Rx<File?> imageFile = Rx<File?>(null); // Reactive variable to store the picked image
+  Rx<File?> imageFile =
+      Rx<File?>(null); // Reactive variable to store the picked image
   final searchController = TextEditingController().obs;
   final searchFiledError = RxString("");
   var isInterested = false.obs;
@@ -39,10 +59,15 @@ class HomeController extends GetxController {
   final RxBool isUploading = false.obs;
   final RxList<UploadedDocument> uploadedDocuments = RxList<UploadedDocument>();
   final apiService = ApiService();
+  var scanStatus = ''.obs; // Completed / Shortage / Excess
+  var scanMessage = ''.obs; // Full message
+  var showResultCard = false.obs;
   @override
   void onInit() {
     super.onInit();
     mobileScannerController = MobileScannerController();
+
+    fetchPickList(); // 🔥 load from backend
   }
 
   @override
@@ -50,9 +75,6 @@ class HomeController extends GetxController {
     mobileScannerController.dispose();
     super.onClose();
   }
-
-
-
 
   // Future<void> uploadItemToPickList(BuildContext context) async {
   //   isPickListUploadLoading.value = true;
@@ -116,6 +138,85 @@ class HomeController extends GetxController {
   //   }
   // }
 
+Future<void> fetchPickList() async {
+  try {
+    final response = await apiService.getRaw(
+      ApiConstants.getPickList,
+    );
+
+    if (response != null && response.statusCode == 200) {
+      final List data = response.data;
+
+      pickList.value = data.map((item) => PickListItem(
+        id: item['_id'],
+        partNumber: item['partNumber'],
+        orderedBy: item['orderedBy'],
+        allocatedBy: item['allocatedBy'],
+        requiredQty: item['requiredQty'],
+      )).toList();
+    }
+  } catch (e) {
+    print("Error fetching pick list: $e");
+  }
+}
+  Future<void> handleQRScan(String qrData) async {
+    try {
+      final data = jsonDecode(qrData);
+
+      String partNumber = data['partNumber'];
+      String orderedBy = data['orderedBy'];
+      String allocatedBy = data['allocatedBy'];
+      int scannedQty = data['scannedQty'];
+
+      final matchedItem = pickList.firstWhereOrNull((item) =>
+          item.partNumber == partNumber &&
+          item.orderedBy == orderedBy &&
+          item.allocatedBy == allocatedBy);
+
+      if (matchedItem == null) {
+        scanStatus.value = "❌ Invalid";
+        scanMessage.value = "No matching item";
+        showResultCard.value = true;
+        return;
+      }
+
+      // ✅ STEP 1: Get ID
+      String id = matchedItem.id;
+
+      // ✅ STEP 2: Call backend API using ID
+      final response = await apiService
+          .getRaw(ApiConstants.scanPickList(id), // 🔥 correct usage
+              );
+
+      print("Scan API response: ${response?.data}");
+
+      // ✅ STEP 3: Compare quantity (your logic)
+      String uniqueId = DateTime.now().millisecondsSinceEpoch.toString();
+
+      if (scannedQty == matchedItem.requiredQty) {
+        scanStatus.value = "Completed";
+        Get.snackbar("Success", "Completed ✅",
+            backgroundColor: Colors.green, colorText: Colors.white);
+      } else if (scannedQty < matchedItem.requiredQty) {
+        scanStatus.value = "Shortage";
+        Get.snackbar("Warning", "Shortage ⚠️",
+            backgroundColor: Colors.orange, colorText: Colors.white);
+      } else {
+        scanStatus.value = "Excess";
+        Get.snackbar("Info", "Excess ℹ️",
+            backgroundColor: Colors.blue, colorText: Colors.white);
+      }
+
+      scanMessage.value =
+          "ID: $uniqueId\n$scannedQty / ${matchedItem.requiredQty}";
+      showResultCard.value = true;
+    } catch (e) {
+      scanStatus.value = "❌ Error";
+      scanMessage.value = "Invalid QR";
+      showResultCard.value = true;
+    }
+  }
+
   // Pick image from camera or gallery
   Future<void> onSelectedPhotoPicker(String value) async {
     ImagePicker picker = ImagePicker();
@@ -124,7 +225,8 @@ class HomeController extends GetxController {
     );
 
     if (pickedFile != null) {
-      imageFile.value = File(pickedFile.path); // Update the reactive image variable
+      imageFile.value =
+          File(pickedFile.path); // Update the reactive image variable
     }
   }
 
@@ -176,7 +278,7 @@ class HomeController extends GetxController {
   Future<String?> extractTextFromPDF(String filePath) async {
     try {
       final document = await PdfDocument.openFile(filePath);
-      StringBuffer  extractedText = StringBuffer();
+      StringBuffer extractedText = StringBuffer();
 
       // Extract text from each page
       for (int i = 1; i <= document.pagesCount; i++) {
@@ -292,7 +394,8 @@ class HomeController extends GetxController {
                       Get.back();
                     },
                     child: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 20),
+                      padding:
+                          EdgeInsets.symmetric(vertical: 20.0, horizontal: 20),
                       child: Column(
                         children: [
                           SizedBox(height: 20),
