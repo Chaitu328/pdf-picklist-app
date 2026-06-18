@@ -885,7 +885,7 @@ class _CollapsedRow extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               '${pickList.parts.length} part${pickList.parts.length != 1 ? 's' : ''}',
-              style: const TextStyle(fontSize: 11,
+              style: TextStyle(fontSize: 11,
                   color: _DT.textSecondary, fontWeight: FontWeight.w600),
             ),
           ]),
