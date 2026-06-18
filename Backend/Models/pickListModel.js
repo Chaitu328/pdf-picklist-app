@@ -70,6 +70,12 @@ const PickListSchema = new mongoose.Schema({
     ref: "User",
     default: null
   },
+  workerIds: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }
+  ],
   status: {
     type: String,
     enum: ["unassigned", "assigned", "processing", "completed", "completed_with_shortage"],
