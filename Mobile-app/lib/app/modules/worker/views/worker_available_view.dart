@@ -224,7 +224,7 @@ class _StatsBanner extends StatelessWidget {
                     fontWeight: FontWeight.w700)),
             const SizedBox(height: 2),
             Text('Tap a card to claim & start picking',
-                style: const TextStyle(fontSize: 11, color: _DT.textSecondary)),
+                style: TextStyle(fontSize: 11, color: _DT.textSecondary)),
           ]),
           const Spacer(),
           Container(
@@ -712,11 +712,11 @@ class _InfoRow extends StatelessWidget {
       ),
       const SizedBox(width: 10),
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: const TextStyle(fontSize: 10,
+        Text(label, style: TextStyle(fontSize: 10,
             color: _DT.textDim, fontWeight: FontWeight.w500,
             letterSpacing: 0.4)),
         const SizedBox(height: 1),
-        Text(value, style: const TextStyle(fontSize: 12,
+        Text(value, style: TextStyle(fontSize: 12,
             fontWeight: FontWeight.w600, color: _DT.textPrimary)),
       ]),
     ]);
@@ -756,11 +756,11 @@ class _PartItem extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(part.description, style: const TextStyle(fontSize: 12,
+          Text(part.description, style: TextStyle(fontSize: 12,
               fontWeight: FontWeight.w600, color: _DT.textPrimary),
               maxLines: 1, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 2),
-          Text(part.partno, style: const TextStyle(
+          Text(part.partno, style: TextStyle(
               fontSize: 10, color: _DT.textDim)),
         ])),
         const SizedBox(width: 10),
@@ -774,7 +774,7 @@ class _PartItem extends StatelessWidget {
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Text('Req ',
-                style: const TextStyle(fontSize: 10, color: _DT.textDim)),
+                style: TextStyle(fontSize: 10, color: _DT.textDim)),
             Text('${part.reqQty}', style: TextStyle(fontSize: 12,
                 color: accent[0], fontWeight: FontWeight.w800)),
           ]),
@@ -867,7 +867,7 @@ class _CollapsedRow extends StatelessWidget {
         const SizedBox(width: 5),
         Expanded(
           child: Text(pickList.clientId?.email ?? '—',
-              style: const TextStyle(fontSize: 12,
+              style: TextStyle(fontSize: 12,
                   color: _DT.textSecondary),
               maxLines: 1, overflow: TextOverflow.ellipsis),
         ),

@@ -777,10 +777,10 @@ class _MyPickListCardState extends State<_MyPickListCard>
   Widget _buildDateRow(PickListModel p) {
     return Row(
       children: [
-        const Icon(Icons.access_time_rounded, size: 11, color: _kTextDim),
+        Icon(Icons.access_time_rounded, size: 11, color: _kTextDim),
         const SizedBox(width: 4),
         Text(_formatDate(p.createdAt),
-            style: const TextStyle(fontSize: 11, color: _kTextDim)),
+            style: TextStyle(fontSize: 11, color: _kTextDim)),
       ],
     );
   }
@@ -868,7 +868,7 @@ class _PartTile extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   part.partno,
-                  style: const TextStyle(fontSize: 11, color: _kTextDim),
+                  style: TextStyle(fontSize: 11, color: _kTextDim),
                 ),
               ],
             ),

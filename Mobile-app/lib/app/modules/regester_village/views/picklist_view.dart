@@ -614,7 +614,7 @@ class _EmptyState extends StatelessWidget {
               border: Border.all(color: _DT.white10, width: 1.5),
             ),
             child:
-                const Icon(Icons.inbox_rounded, size: 44, color: _DT.textDim),
+                Icon(Icons.inbox_rounded, size: 44, color: _DT.textDim),
           ),
           const SizedBox(height: 20),
           const Text('No pick lists found',
@@ -1113,11 +1113,11 @@ class _CollapsedSummary extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(children: [
-        const Icon(Icons.person_outline_rounded, size: 14, color: _DT.textDim),
+        Icon(Icons.person_outline_rounded, size: 14, color: _DT.textDim),
         const SizedBox(width: 6),
         Expanded(
           child: Text(pickList.clientId?.email ?? '—',
-              style: const TextStyle(fontSize: 12, color: _DT.textSecondary),
+              style: TextStyle(fontSize: 12, color: _DT.textSecondary),
               maxLines: 1,
               overflow: TextOverflow.ellipsis),
         ),
