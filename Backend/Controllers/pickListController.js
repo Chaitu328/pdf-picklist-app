@@ -30,12 +30,13 @@ const createPickList = async (req, res) => {
   }
 };
 
-// GET ALL PICKLISTS (WITH PJP PRIORITY LOGIC)
+// GET ALL PICKLISTS (WITH PJP PRIORITY LOGIC AND DYNAMIC TRANSLATION)
 const getAllPickLists = async (req, res) => {
   try {
     const picklists = await PickList.find()
       .populate("clientId", "name email")
       .populate("workerId", "name email")
+      .populate("workerIds", "name email")
       .lean(); // Converts to plain JS array for sorting
 
     // PJP Logic: Identify current day and sort
@@ -48,24 +49,115 @@ const getAllPickLists = async (req, res) => {
       return 0; // Keep original order for others
     });
 
-    res.status(200).json(picklists);
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    const transformed = picklists.map(picklist => {
+      const workerIds = picklist.workerIds || [];
+      const isAssignedToMe = workerIds.some(w => w._id.toString() === userId);
+      const workerCount = workerIds.length;
+
+      if (userRole === "worker") {
+        if (isAssignedToMe) {
+          // Worker is assigned, return worker's own info in workerId
+          const myInfo = workerIds.find(w => w._id.toString() === userId);
+          return {
+            ...picklist,
+            workerId: myInfo
+          };
+        } else {
+          // Worker is not assigned
+          if (workerCount < 3) {
+            // Available for claim
+            return {
+              ...picklist,
+              workerId: null,
+              status: "unassigned"
+            };
+          } else {
+            // Full, not available to this worker
+            return {
+              ...picklist,
+              workerId: null,
+              status: picklist.status === "unassigned" ? "assigned" : picklist.status
+            };
+          }
+        }
+      } else {
+        // Manager role: combine names and emails of all assigned workers
+        if (workerIds.length > 0) {
+          const names = workerIds.map(w => w.name).join(", ");
+          const emails = workerIds.map(w => w.email).join(", ");
+          return {
+            ...picklist,
+            workerId: {
+              _id: workerIds[0]._id,
+              name: names,
+              email: emails
+            }
+          };
+        } else {
+          return {
+            ...picklist,
+            workerId: null
+          };
+        }
+      }
+    });
+
+    res.status(200).json(transformed);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-// WORKER CLAIM PICKLIST
+// WORKER CLAIM PICKLIST (Up to 3 workers)
 const assignPickList = async (req, res) => {
   try {
     const workerId = req.user.id;
-    const picklist = await PickList.findOneAndUpdate(
-      { _id: req.params.id, workerId: null },
-      { workerId: workerId, status: "assigned" },
-      { new: true }
-    );
+    const picklist = await PickList.findById(req.params.id);
 
-    if (!picklist) return res.status(400).json({ message: "Picklist already assigned or not found" });
-    res.json(picklist);
+    if (!picklist) {
+      return res.status(404).json({ message: "Picklist not found" });
+    }
+
+    if (!picklist.workerIds) {
+      picklist.workerIds = [];
+    }
+
+    // Limit to 3 workers
+    if (picklist.workerIds.length >= 3) {
+      return res.status(400).json({ message: "Limit reached. This picklist already has 3 workers assigned." });
+    }
+
+    // Check if worker already assigned
+    const alreadyAssigned = picklist.workerIds.some(id => id.toString() === workerId);
+    if (alreadyAssigned) {
+      return res.status(400).json({ message: "Worker already assigned to this picklist" });
+    }
+
+    picklist.workerIds.push(workerId);
+
+    // Set workerId for backward compatibility
+    if (!picklist.workerId) {
+      picklist.workerId = workerId;
+    }
+
+    picklist.status = "assigned";
+    await picklist.save();
+
+    const populatedPicklist = await PickList.findById(picklist._id)
+      .populate("clientId", "name email")
+      .populate("workerId", "name email")
+      .populate("workerIds", "name email");
+
+    const myInfo = populatedPicklist.workerIds.find(w => w._id.toString() === workerId);
+    const transformed = {
+      ...populatedPicklist.toObject(),
+      workerId: myInfo
+    };
+
+    res.json(transformed);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -78,6 +170,12 @@ const updateScan = async (req, res) => {
     const picklist = await PickList.findById(req.params.id);
 
     if (!picklist) return res.status(404).json({ message: "Picklist not found" });
+
+    // Validate that the worker is assigned to this picklist
+    const isAssigned = picklist.workerIds && picklist.workerIds.some(id => id.toString() === req.user.id);
+    if (!isAssigned && picklist.workerId?.toString() !== req.user.id) {
+      return res.status(403).json({ message: "You are not assigned to this picklist." });
+    }
 
     // 1. Duplicate Check: Ensure Unique ID hasn't been scanned already across all parts
     if (entry_method === "QR" && unique_id) {
@@ -100,8 +198,12 @@ const updateScan = async (req, res) => {
       });
     }
 
-    // 4. Update data
-    part.scanned_items.push({ unique_id: unique_id || null, entry_method });
+    // 4. Update data (records workerId for the scan)
+    part.scanned_items.push({ 
+      unique_id: unique_id || null, 
+      entry_method,
+      workerId: req.user.id
+    });
     part.allo_qty += 1;
 
     // Update part status
@@ -114,7 +216,18 @@ const updateScan = async (req, res) => {
     picklist.status = "processing";
     await picklist.save();
 
-    res.json(picklist);
+    const populatedPicklist = await PickList.findById(picklist._id)
+      .populate("clientId", "name email")
+      .populate("workerId", "name email")
+      .populate("workerIds", "name email");
+
+    const myInfo = populatedPicklist.workerIds.find(w => w._id.toString() === req.user.id);
+    const transformed = {
+      ...populatedPicklist.toObject(),
+      workerId: myInfo
+    };
+
+    res.json(transformed);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -146,7 +259,87 @@ const proceedWithShortage = async (req, res) => {
       });
     }
 
-    res.json({ message: "Picklist finalized", picklist });
+    const populatedPicklist = await PickList.findById(picklist._id)
+      .populate("clientId", "name email")
+      .populate("workerId", "name email")
+      .populate("workerIds", "name email");
+
+    const myInfo = populatedPicklist.workerIds.find(w => w._id.toString() === req.user.id);
+    const transformed = {
+      ...populatedPicklist.toObject(),
+      workerId: myInfo
+    };
+
+    res.json({ message: "Picklist finalized", picklist: transformed });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// GET ADMIN SUMMARY OF ALL PICKLISTS (For Browser Admin Dashboard / Postman check)
+const getAdminSummary = async (req, res) => {
+  try {
+    if (req.user.role !== "manager") {
+      return res.status(403).json({ message: "Access denied. Managers only." });
+    }
+
+    const picklists = await PickList.find()
+      .populate("clientId", "name email")
+      .populate("workerIds", "name email")
+      .lean();
+
+    const summary = picklists.map(pl => {
+      const partsSummary = pl.parts.map(part => {
+        // Group scans by worker
+        const workerScans = {};
+        part.scanned_items.forEach(item => {
+          const wId = item.workerId ? item.workerId.toString() : "unassigned";
+          if (!workerScans[wId]) {
+            workerScans[wId] = {
+              workerId: wId,
+              name: "Unknown Worker",
+              email: "Unknown",
+              count: 0
+            };
+          }
+          workerScans[wId].count += 1;
+        });
+
+        // Resolve names/emails from workerIds
+        Object.keys(workerScans).forEach(wId => {
+          const workerInfo = pl.workerIds.find(w => w._id.toString() === wId);
+          if (workerInfo) {
+            workerScans[wId].name = workerInfo.name;
+            workerScans[wId].email = workerInfo.email;
+          } else if (wId === "unassigned") {
+            workerScans[wId].name = "Manual / Unassigned";
+            workerScans[wId].email = "";
+          }
+        });
+
+        return {
+          partno: part.partno,
+          description: part.description,
+          req_qty: part.req_qty,
+          allo_qty: part.allo_qty,
+          status: part.status,
+          scansByWorker: Object.values(workerScans)
+        };
+      });
+
+      return {
+        _id: pl._id,
+        pick_list_no: pl.pick_list_no,
+        order_number: pl.order_number,
+        picklist_date: pl.picklist_date,
+        route_day: pl.route_day,
+        status: pl.status,
+        workers: (pl.workerIds || []).map(w => ({ name: w.name, email: w.email })),
+        parts: partsSummary
+      };
+    });
+
+    res.status(200).json(summary);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -184,5 +377,6 @@ module.exports = {
   deleteAllPickLists,
   updateScan,
   proceedWithShortage,
-  getAllPickLists
+  getAllPickLists,
+  getAdminSummary
 };

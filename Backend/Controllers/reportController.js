@@ -45,10 +45,10 @@ const downloadExcelReport = async (req, res) => {
     if (!picklist) return res.status(404).json({ message: "Picklist not found" });
 
     const data = formatReportData(picklist);
-    
+
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Scan History");
-    
+
     worksheet.columns = [
       { header: "PickList No", key: "PickListNo", width: 15 },
       { header: "Order No", key: "OrderNo", width: 15 },
@@ -66,7 +66,7 @@ const downloadExcelReport = async (req, res) => {
 
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.setHeader("Content-Disposition", `attachment; filename=Report-${picklist.pick_list_no}.xlsx`);
-    
+
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
@@ -96,7 +96,7 @@ const downloadAllPicklistsExcel = async (req, res) => {
   try {
     // Fetch all picklists
     const picklists = await PickList.find().populate("workerId", "name");
-    
+
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Full Warehouse History");
 
@@ -115,15 +115,15 @@ const downloadAllPicklistsExcel = async (req, res) => {
       // 1. Create a Master Header Row for the specific Picklist
       const workerName = picklist.workerId ? picklist.workerId.name : "Unassigned";
       const headerRow = worksheet.addRow([
-        `Picklist: ${picklist.pick_list_no}`, 
-        `Order: ${picklist.order_number}`, 
+        `Picklist: ${picklist.pick_list_no}`,
+        `Order: ${picklist.order_number}`,
         `Worker: ${workerName}`,
         `Status: ${picklist.status}`
       ]);
-      
+
       // Style the Header Row (Bold text, dark blue background, white text)
       headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0070C0' } }; 
+      headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0070C0' } };
 
       // 2. Create Column Headers for the parts table
       const colHeaders = worksheet.addRow([
@@ -140,9 +140,9 @@ const downloadAllPicklistsExcel = async (req, res) => {
         } else {
           part.scanned_items.forEach(scan => {
             worksheet.addRow([
-              part.partno, part.req_qty, part.allo_qty, part.status, 
-              scan.unique_id || "N/A (Manual)", 
-              scan.entry_method, 
+              part.partno, part.req_qty, part.allo_qty, part.status,
+              scan.unique_id || "N/A (Manual)",
+              scan.entry_method,
               scan.scannedAt ? scan.scannedAt.toISOString() : "N/A"
             ]);
           });
@@ -164,8 +164,8 @@ const downloadAllPicklistsExcel = async (req, res) => {
       "Content-Disposition",
       'attachment; filename="Global-Warehouse-Report.xlsx"'
     );
-    
-    
+
+
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {

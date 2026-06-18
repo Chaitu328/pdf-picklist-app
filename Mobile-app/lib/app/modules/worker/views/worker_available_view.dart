@@ -4,16 +4,20 @@ import 'package:get/get.dart';
 import '../../../../app_utils/color_constants.dart';
 import '../../regester_village/models/get_pick_list_model.dart';
 import '../controllers/worker_controller.dart';
+import '../../../../services/theme_controller.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DESIGN TOKENS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _DT {
-  static const bg   = Color(0xFF060A16);
-  static const bg2  = Color(0xFF0E1220);
-  static const bg3  = Color(0xFF141829);
-  static const bg4  = Color(0xFF1A1F35);
+  static ThemeController get _tc => Get.find<ThemeController>();
+  static bool get isDark => _tc.isDarkMode.value;
+
+  static Color get bg   => isDark ? const Color(0xFF060A16) : const Color(0xFFF5F7FA);
+  static Color get bg2  => isDark ? const Color(0xFF0E1220) : Colors.white;
+  static Color get bg3  => isDark ? const Color(0xFF141829) : const Color(0xFFE2E8F0);
+  static Color get bg4  => isDark ? const Color(0xFF1A1F35) : const Color(0xFFCBD5E1);
 
   static const List<Color> violetTeal  = [Color(0xFF6C63FF), Color(0xFF3ECFCF)];
   static const List<Color> indigoCyan  = [Color(0xFF4158D0), Color(0xFF0FBCF9)];
@@ -26,13 +30,13 @@ class _DT {
   static const amber = Color(0xFFF39C12);
   static const red   = Color(0xFFE74C3C);
 
-  static const textPrimary   = Color(0xFFE8EAF6);
-  static const textSecondary = Color(0xFF8B92A9);
-  static const textDim       = Color(0xFF4A5068);
+  static Color get textPrimary   => isDark ? const Color(0xFFE8EAF6) : const Color(0xFF1E293B);
+  static Color get textSecondary => isDark ? const Color(0xFF8B92A9) : const Color(0xFF64748B);
+  static Color get textDim       => isDark ? const Color(0xFF4A5068) : const Color(0xFF94A3B8);
 
-  static const white06 = Color(0x0FFFFFFF);
-  static const white10 = Color(0x1AFFFFFF);
-  static const white15 = Color(0x26FFFFFF);
+  static Color get white06 => isDark ? const Color(0x0FFFFFFF) : const Color(0x0F000000);
+  static Color get white10 => isDark ? const Color(0x1AFFFFFF) : const Color(0x1A000000);
+  static Color get white15 => isDark ? const Color(0x26FFFFFF) : const Color(0x26000000);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -44,30 +48,33 @@ class WorkerAvailableView extends GetView<WorkerController> {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: _DT.bg,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ));
+    return Obx(() {
+      final isDarkTheme = _DT.isDark;
+      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDarkTheme ? Brightness.light : Brightness.dark,
+        systemNavigationBarColor: _DT.bg,
+        systemNavigationBarIconBrightness: isDarkTheme ? Brightness.light : Brightness.dark,
+      ));
 
-    return Scaffold(
-      backgroundColor: _DT.bg,
-      extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(),
-      body: Stack(
-        children: [
-          // Background glow orbs
-          Positioned(top: -60, right: -80,
-              child: _GlowOrb(colors: _DT.violetTeal, size: 260, opacity: 0.18)),
-          Positioned(bottom: 120, left: -60,
-              child: _GlowOrb(colors: _DT.emeraldMint, size: 200, opacity: 0.12)),
-          Positioned(top: 300, right: -40,
-              child: _GlowOrb(colors: _DT.indigoCyan, size: 160, opacity: 0.08)),
-          Obx(() => _buildBody()),
-        ],
-      ),
-    );
+      return Scaffold(
+        backgroundColor: _DT.bg,
+        extendBodyBehindAppBar: true,
+        appBar: _buildAppBar(),
+        body: Stack(
+          children: [
+            // Background glow orbs
+            Positioned(top: -60, right: -80,
+                child: _GlowOrb(colors: _DT.violetTeal, size: 260, opacity: isDarkTheme ? 0.18 : 0.08)),
+            Positioned(bottom: 120, left: -60,
+                child: _GlowOrb(colors: _DT.emeraldMint, size: 200, opacity: isDarkTheme ? 0.12 : 0.06)),
+            Positioned(top: 300, right: -40,
+                child: _GlowOrb(colors: _DT.indigoCyan, size: 160, opacity: isDarkTheme ? 0.08 : 0.04)),
+            _buildBody(),
+          ],
+        ),
+      );
+    });
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -75,7 +82,7 @@ class WorkerAvailableView extends GetView<WorkerController> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       flexibleSpace: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -315,12 +322,12 @@ class _EmptyState extends StatelessWidget {
         Container(
           width: 96, height: 96,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [_DT.bg3, _DT.bg4],
+            gradient: LinearGradient(colors: [_DT.bg3, _DT.bg4],
                 begin: Alignment.topLeft, end: Alignment.bottomRight),
             shape: BoxShape.circle,
             border: Border.all(color: _DT.white10, width: 1.5),
           ),
-          child: const Icon(Icons.inbox_rounded, size: 44, color: _DT.textDim),
+          child: Icon(Icons.inbox_rounded, size: 44, color: _DT.textDim),
         ),
         const SizedBox(height: 20),
         const Text('No available pick lists',

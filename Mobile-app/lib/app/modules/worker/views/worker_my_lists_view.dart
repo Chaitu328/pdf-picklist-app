@@ -5,23 +5,24 @@ import '../../../../app_utils/color_constants.dart';
 import '../../../routes/app_routes.dart';
 import '../../regester_village/models/get_pick_list_model.dart';
 import '../controllers/worker_controller.dart';
+import '../../../../services/theme_controller.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COLOR TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
 
-const _kBg1 = Color(0xFF07090F);
-const _kBg2 = Color(0xFF0D1017);
-const _kBg3 = Color(0xFF131720);
-const _kBg4 = Color(0xFF1B2030);
+Color get _kBg1 => Get.find<ThemeController>().isDarkMode.value ? const Color(0xFF07090F) : const Color(0xFFF5F7FA);
+Color get _kBg2 => Get.find<ThemeController>().isDarkMode.value ? const Color(0xFF0D1017) : Colors.white;
+Color get _kBg3 => Get.find<ThemeController>().isDarkMode.value ? const Color(0xFF131720) : const Color(0xFFE2E8F0);
+Color get _kBg4 => Get.find<ThemeController>().isDarkMode.value ? const Color(0xFF1B2030) : const Color(0xFFCBD5E1);
 
-const _kWhite06 = Color(0x0FFFFFFF);
-const _kWhite10 = Color(0x1AFFFFFF);
-const _kWhite18 = Color(0x2EFFFFFF);
+Color get _kWhite06 => Get.find<ThemeController>().isDarkMode.value ? const Color(0x0FFFFFFF) : const Color(0x0F000000);
+Color get _kWhite10 => Get.find<ThemeController>().isDarkMode.value ? const Color(0x1AFFFFFF) : const Color(0x1A000000);
+Color get _kWhite18 => Get.find<ThemeController>().isDarkMode.value ? const Color(0x2EFFFFFF) : const Color(0x2E000000);
 
-const _kTextPrimary = Color(0xFFECEEF4);
-const _kTextSecondary = Color(0xFF8B92A9);
-const _kTextDim = Color(0xFF4A5068);
+Color get _kTextPrimary => Get.find<ThemeController>().isDarkMode.value ? const Color(0xFFECEEF4) : const Color(0xFF1E293B);
+Color get _kTextSecondary => Get.find<ThemeController>().isDarkMode.value ? const Color(0xFF8B92A9) : const Color(0xFF64748B);
+Color get _kTextDim => Get.find<ThemeController>().isDarkMode.value ? const Color(0xFF4A5068) : const Color(0xFF94A3B8);
 
 const _kGreen = Color(0xFF2ECC71);
 const _kAmber = Color(0xFFF39C12);
@@ -46,42 +47,45 @@ class WorkerMyListsView extends GetView<WorkerController> {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: _kBg1,
-      systemNavigationBarIconBrightness: Brightness.light,
-    ));
+    return Obx(() {
+      final isDark = Get.find<ThemeController>().isDarkMode.value;
+      SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        systemNavigationBarColor: _kBg1,
+        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      ));
 
-    return Scaffold(
-      backgroundColor: _kBg1,
-      extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(),
-      body: Stack(
-        children: [
-          // ambient glow orbs
-          Positioned(
-            top: -40,
-            right: -60,
-            child: _GlowOrb(
-              colors: _kAccents[0],
-              size: 220,
-              opacity: 0.15,
+      return Scaffold(
+        backgroundColor: _kBg1,
+        extendBodyBehindAppBar: true,
+        appBar: _buildAppBar(),
+        body: Stack(
+          children: [
+            // ambient glow orbs
+            Positioned(
+              top: -40,
+              right: -60,
+              child: _GlowOrb(
+                colors: _kAccents[0],
+                size: 220,
+                opacity: isDark ? 0.15 : 0.07,
+              ),
             ),
-          ),
-          Positioned(
-            bottom: 100,
-            left: -50,
-            child: _GlowOrb(
-              colors: _kAccents[1],
-              size: 180,
-              opacity: 0.10,
+            Positioned(
+              bottom: 100,
+              left: -50,
+              child: _GlowOrb(
+                colors: _kAccents[1],
+                size: 180,
+                opacity: isDark ? 0.10 : 0.05,
+              ),
             ),
-          ),
-          Obx(() => _buildBody()),
-        ],
-      ),
-    );
+            _buildBody(),
+          ],
+        ),
+      );
+    });
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -89,7 +93,7 @@ class WorkerMyListsView extends GetView<WorkerController> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       flexibleSpace: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -443,7 +447,7 @@ class _EmptyState extends StatelessWidget {
             width: 92,
             height: 92,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 colors: [_kBg3, _kBg4],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -451,7 +455,7 @@ class _EmptyState extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: _kWhite10, width: 1.5),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.assignment_outlined,
               size: 42,
               color: _kTextDim,
