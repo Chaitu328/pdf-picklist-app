@@ -319,7 +319,7 @@ class _SummaryPill extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 9,
                 color: _kTextSecondary,
                 fontWeight: FontWeight.w600,
@@ -413,7 +413,7 @@ class _LoadingStateState extends State<_LoadingState>
               const SizedBox(height: 18),
               Opacity(
                 opacity: 0.5 + 0.5 * _pulse.value,
-                child: const Text(
+                child: Text(
                   'Loading your lists…',
                   style: TextStyle(
                     color: _kTextSecondary,
@@ -462,7 +462,7 @@ class _EmptyState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'No lists assigned yet',
             style: TextStyle(
               fontSize: 17,
@@ -471,7 +471,7 @@ class _EmptyState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Go to Available Lists to claim one',
             style: TextStyle(fontSize: 13, color: _kTextDim),
           ),
@@ -739,10 +739,10 @@ class _MyPickListCardState extends State<_MyPickListCard>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Manager',
+              Text('Manager',
                   style: TextStyle(fontSize: 10, color: _kTextDim)),
               Text(p.clientId?.email ?? '—',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: _kTextPrimary)),
@@ -856,7 +856,7 @@ class _PartTile extends StatelessWidget {
               children: [
                 Text(
                   part.description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: _kTextPrimary,
@@ -928,7 +928,7 @@ class _QtyRow extends StatelessWidget {
       children: [
         Text(
           '$label ',
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 10, color: _kTextDim, fontWeight: FontWeight.w500),
         ),
         Text(

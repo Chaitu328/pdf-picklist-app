@@ -219,7 +219,7 @@ class _StatsBanner extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('Unassigned Pick Lists',
+            Text('Unassigned Pick Lists',
                 style: TextStyle(fontSize: 13, color: _DT.textPrimary,
                     fontWeight: FontWeight.w700)),
             const SizedBox(height: 2),
@@ -298,7 +298,7 @@ class _LoadingStateState extends State<_LoadingState>
           const SizedBox(height: 20),
           Opacity(
             opacity: 0.5 + 0.5 * _pulse.value,
-            child: const Text('Loading available lists…',
+            child: Text('Loading available lists…',
                 style: TextStyle(color: _DT.textSecondary, fontSize: 14,
                     fontWeight: FontWeight.w500)),
           ),
@@ -330,11 +330,11 @@ class _EmptyState extends StatelessWidget {
           child: Icon(Icons.inbox_rounded, size: 44, color: _DT.textDim),
         ),
         const SizedBox(height: 20),
-        const Text('No available pick lists',
+        Text('No available pick lists',
             style: TextStyle(fontSize: 17, color: _DT.textSecondary,
                 fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
-        const Text('Pull down to refresh',
+        Text('Pull down to refresh',
             style: TextStyle(fontSize: 13, color: _DT.textDim)),
       ]),
     );
@@ -862,7 +862,7 @@ class _CollapsedRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(children: [
-        const Icon(Icons.person_outline_rounded,
+        Icon(Icons.person_outline_rounded,
             size: 13, color: _DT.textDim),
         const SizedBox(width: 5),
         Expanded(

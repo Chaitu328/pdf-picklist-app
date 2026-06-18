@@ -47,7 +47,7 @@ class ViewPickList extends StatelessWidget {
     final ctrl = Get.put(RegisterVillageController());
     Get.put(LoginController());
 
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
       systemNavigationBarColor: _DT.bg,
@@ -86,7 +86,7 @@ class ViewPickList extends StatelessWidget {
       backgroundColor: Colors.transparent,
       elevation: 0,
       flexibleSpace: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -211,7 +211,7 @@ class ViewPickList extends StatelessWidget {
                   size: 30, color: _DT.red.withOpacity(0.9)),
             ),
             const SizedBox(height: 16),
-            const Text('Delete Pick List?',
+            Text('Delete Pick List?',
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -220,7 +220,7 @@ class ViewPickList extends StatelessWidget {
             Text(
               'Pick list $codeLabel will be permanently removed.\nThis action cannot be undone.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13, color: _DT.textSecondary, height: 1.6),
             ),
             const SizedBox(height: 28),
@@ -236,7 +236,7 @@ class ViewPickList extends StatelessWidget {
                       border: Border.all(color: _DT.white15),
                     ),
                     alignment: Alignment.center,
-                    child: const Text('Cancel',
+                    child: Text('Cancel',
                         style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -449,7 +449,7 @@ class _StatPill extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(label,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 10,
                     color: _DT.textSecondary,
                     fontWeight: FontWeight.w600,
@@ -527,7 +527,7 @@ class _LoadingStateState extends State<_LoadingState>
             const SizedBox(height: 20),
             Opacity(
               opacity: 0.5 + 0.5 * _pulse.value,
-              child: const Text('Loading pick lists…',
+              child: Text('Loading pick lists…',
                   style: TextStyle(
                       color: _DT.textSecondary,
                       fontSize: 14,
@@ -574,7 +574,7 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 20),
             Text(ctrl.errorMessage.value,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 14, color: _DT.textSecondary, height: 1.6)),
             const SizedBox(height: 28),
             _GradientButton(
@@ -606,7 +606,7 @@ class _EmptyState extends StatelessWidget {
             width: 96,
             height: 96,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                   colors: [_DT.bg3, _DT.bg4],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight),
@@ -617,13 +617,13 @@ class _EmptyState extends StatelessWidget {
                 Icon(Icons.inbox_rounded, size: 44, color: _DT.textDim),
           ),
           const SizedBox(height: 20),
-          const Text('No pick lists found',
+          Text('No pick lists found',
               style: TextStyle(
                   fontSize: 17,
                   color: _DT.textSecondary,
                   fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
-          const Text('Pull down to refresh',
+          Text('Pull down to refresh',
               style: TextStyle(fontSize: 13, color: _DT.textDim)),
         ],
       ),
@@ -885,7 +885,7 @@ class _PickListCardState extends State<_PickListCard>
                               color: _DT.white10,
                               borderRadius: BorderRadius.circular(9),
                               border: Border.all(color: _DT.white15)),
-                          child: const Icon(Icons.keyboard_arrow_down_rounded,
+                          child: Icon(Icons.keyboard_arrow_down_rounded,
                               color: Colors.white70, size: 19),
                         ),
                       ),
@@ -947,11 +947,11 @@ class _PickListCardState extends State<_PickListCard>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.access_time_rounded,
+                                Icon(Icons.access_time_rounded,
                                     size: 11, color: _DT.textDim),
                                 const SizedBox(width: 4),
                                 Text(_formatDate(p.createdAt),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 11, color: _DT.textDim)),
                               ],
                             ),
@@ -1134,7 +1134,7 @@ class _CollapsedSummary extends StatelessWidget {
             const SizedBox(width: 5),
             Text(
               '${pickList.parts.length} part${pickList.parts.length != 1 ? 's' : ''}',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 11,
                   color: _DT.textSecondary,
                   fontWeight: FontWeight.w600),
@@ -1201,7 +1201,7 @@ class _PartRow extends StatelessWidget {
             children: [
               Text(
                 part.description,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: _DT.textPrimary,
@@ -1214,7 +1214,7 @@ class _PartRow extends StatelessWidget {
               // ✅ FIX 3: overflow:visible — never clips any characters
               Text(
                 partNo,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   color: _DT.textDim,
                   fontWeight: FontWeight.w500,
@@ -1272,7 +1272,7 @@ class _QtyBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
       Text('$label ',
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 10, color: _DT.textDim, fontWeight: FontWeight.w500)),
       Text(value,
           style: TextStyle(
@@ -1324,7 +1324,7 @@ class _InfoTile extends StatelessWidget {
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(label,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 10,
                   color: _DT.textDim,
                   fontWeight: FontWeight.w500,
