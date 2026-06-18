@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:inventory/app/modules/home/models/delivery_routes_model.dart';
 import 'package:inventory/app_utils/color_constants.dart';
 import 'package:inventory/main.dart';
@@ -8,6 +9,23 @@ import 'package:file_picker/file_picker.dart';
 
 import '../../../../app_data/api_url.dart';
 import '../../../../app_data/base_api_service.dart';
+import '../../../../services/theme_controller.dart';
+
+class _DT {
+  static ThemeController get _tc => Get.find<ThemeController>();
+  static bool get isDark => _tc.isDarkMode.value;
+
+  static Color get bg => isDark ? const Color(0xFF060A16) : const Color(0xFFF5F7FA);
+  static Color get bg2 => isDark ? const Color(0xFF0E1220) : Colors.white;
+  static Color get bg3 => isDark ? const Color(0xFF141829) : const Color(0xFFE2E8F0);
+  static Color get bg4 => isDark ? const Color(0xFF1A1F35) : const Color(0xFFCBD5E1);
+
+  static Color get textPrimary => isDark ? const Color(0xFFE8EAF6) : const Color(0xFF1E293B);
+  static Color get textSecondary => isDark ? const Color(0xFF8B92A9) : const Color(0xFF64748B);
+  static Color get textDim => isDark ? const Color(0xFF4A5068) : const Color(0xFF94A3B8);
+
+  static Color get cardBg => isDark ? const Color(0xFF0E1220) : Colors.white;
+}
 
 // ─────────────────────────────────────────────────────────────
 // LOCAL DATA MODELS
@@ -465,31 +483,49 @@ class _PickListsByOrderScreenState extends State<PickListsByOrderScreen> {
     final filtered = _filteredGrouped;
     final totalOrders = filtered.length;
     final totalPickLists = filtered.values.fold(0, (s, l) => s + l.length);
+    final themeCtrl = Get.find<ThemeController>();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F8),
-      appBar: AppBar(
-        title: const Text('Pick Lists by Order',
-            style: TextStyle(fontWeight: FontWeight.w700)),
-        backgroundColor: AppColor.bottomNavBarBackground,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
-            onPressed: _fetchPickLists,
+    return Obx(() {
+      final isDarkTheme = _DT.isDark;
+      return Scaffold(
+        backgroundColor: _DT.bg,
+        appBar: AppBar(
+          title: const Text('Pick Lists by Order',
+              style: TextStyle(fontWeight: FontWeight.w700)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_DT.bg4, _DT.bg2],
+              ),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Upload New Pick List',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const PickListView()),
-            ).then((_) => _fetchPickLists()),
-          ),
-        ],
-      ),
+          foregroundColor: Colors.white,
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: isDarkTheme ? const Icon(Icons.light_mode_rounded) : const Icon(Icons.dark_mode_rounded),
+              onPressed: themeCtrl.toggleTheme,
+              tooltip: 'Toggle Theme',
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Refresh',
+              onPressed: _fetchPickLists,
+            ),
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: 'Upload New Pick List',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PickListView()),
+              ).then((_) => _fetchPickLists()),
+            ),
+          ],
+        ),
       body: Column(
         children: [
           Container(
@@ -567,6 +603,7 @@ class _PickListsByOrderScreenState extends State<PickListsByOrderScreen> {
         ],
       ),
     );
+    });
   }
 
   // Add this helper widget to your file or at the top of PickListView
@@ -1272,30 +1309,48 @@ class _PickListViewState extends State<PickListView>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F8),
-      appBar: AppBar(
-        title: const Text('Pick List',
-            style: TextStyle(fontWeight: FontWeight.w700)),
-        backgroundColor: AppColor.bottomNavBarBackground,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-        actions: [
-          if (_data != null) ...[
-            if (_savedPickListId != null)
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.redAccent),
-                tooltip: 'Delete Pick List',
-                onPressed: _deletePickList,
+    final themeCtrl = Get.find<ThemeController>();
+    return Obx(() {
+      final isDarkTheme = _DT.isDark;
+      return Scaffold(
+        backgroundColor: _DT.bg,
+        appBar: AppBar(
+          title: const Text('Pick List',
+              style: TextStyle(fontWeight: FontWeight.w700)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_DT.bg4, _DT.bg2],
               ),
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _clear,
-              tooltip: 'Clear',
             ),
+          ),
+          foregroundColor: Colors.white,
+          centerTitle: true,
+          actions: [
+            IconButton(
+              icon: isDarkTheme ? const Icon(Icons.light_mode_rounded) : const Icon(Icons.dark_mode_rounded),
+              onPressed: themeCtrl.toggleTheme,
+              tooltip: 'Toggle Theme',
+            ),
+            if (_data != null) ...[
+              if (_savedPickListId != null)
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                  tooltip: 'Delete Pick List',
+                  onPressed: _deletePickList,
+                ),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: _clear,
+                tooltip: 'Clear',
+              ),
+            ],
           ],
-        ],
-      ),
+        ),
       bottomNavigationBar: _data != null && !_isLoading
           ? SafeArea(
               child: Padding(
@@ -1506,7 +1561,8 @@ class _PickListViewState extends State<PickListView>
                 ),
               ),
             ),
-    );
+      );
+    });
   }
 
   Widget _tabItem(IconData icon, String text) {
@@ -1611,13 +1667,14 @@ class _PickListViewState extends State<PickListView>
   }
 
   Widget _routeCard(String networkCode, String city) {
+    final isDarkTheme = _DT.isDark;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _DT.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDDE3F0)),
+        border: Border.all(color: isDarkTheme ? Colors.white12 : const Color(0xFFDDE3F0)),
       ),
       child: Row(
         children: [
@@ -1634,17 +1691,17 @@ class _PickListViewState extends State<PickListView>
               children: [
                 Text(
                   networkCode,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 14),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14, color: _DT.textPrimary),
                 ),
                 Text(
                   city,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  style: TextStyle(color: _DT.textSecondary, fontSize: 12),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: Colors.grey),
+          Icon(Icons.chevron_right, color: isDarkTheme ? Colors.grey.shade500 : Colors.grey),
         ],
       ),
     );
@@ -1654,14 +1711,19 @@ class _PickListViewState extends State<PickListView>
 
   Widget _itemCard(int i) {
     final r = _rows[i];
+    final isDarkTheme = _DT.isDark;
+    final itemBgColor = isDarkTheme
+        ? (i.isEven ? const Color(0xFF131720) : const Color(0xFF1C2132))
+        : (i.isEven ? const Color(0xFFEEF1FB) : Colors.white);
+
     return RepaintBoundary(
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: i.isEven ? const Color(0xFFEEF1FB) : Colors.white,
+          color: itemBgColor,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFDDE3F0)),
+          border: Border.all(color: isDarkTheme ? Colors.white12 : const Color(0xFFDDE3F0)),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
@@ -1757,11 +1819,11 @@ class _PickListViewState extends State<PickListView>
   }) =>
       Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: _DT.cardBg,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: Colors.black.withOpacity(_DT.isDark ? 0.35 : 0.06),
                 blurRadius: 8,
                 offset: const Offset(0, 2))
           ],
@@ -1804,62 +1866,64 @@ class _PickListViewState extends State<PickListView>
     TextInputType type = TextInputType.text,
     bool hi = false,
     bool readOnly = false,
-  }) =>
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label.toUpperCase(),
-            style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: Colors.grey.shade600,
-                letterSpacing: 0.6)),
-        const SizedBox(height: 4),
-        TextFormField(
-          controller: ctrl,
-          keyboardType: type,
-          readOnly: readOnly,
-          showCursor: !readOnly,
+  }) {
+    final isDarkTheme = _DT.isDark;
+    final textStyleColor = readOnly
+        ? (isDarkTheme ? Colors.white54 : Colors.black54)
+        : (hi
+            ? _primary
+            : (isDarkTheme ? Colors.white : Colors.black87));
+
+    final inputFillColor = readOnly
+        ? (isDarkTheme ? const Color(0xFF131720) : const Color(0xFFEEEEEE))
+        : (hi
+            ? const Color(0xFFE8EAF6)
+            : (isDarkTheme ? const Color(0xFF1B2030) : const Color(0xFFFAFAFA)));
+
+    final inputBorderColor = readOnly
+        ? (isDarkTheme ? Colors.white10 : Colors.grey.shade400)
+        : (hi
+            ? const Color(0xFF5C6BC0)
+            : (isDarkTheme ? Colors.white24 : Colors.grey.shade300));
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label.toUpperCase(),
           style: TextStyle(
-              fontSize: 13,
-              fontWeight: hi ? FontWeight.w700 : FontWeight.normal,
-              color: readOnly
-                  ? Colors.black54
-                  : hi
-                      ? _primary
-                      : Colors.black87),
-          decoration: InputDecoration(
-            isDense: true,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            filled: true,
-            fillColor: readOnly
-                ? const Color(0xFFEEEEEE)
-                : hi
-                    ? const Color(0xFFE8EAF6)
-                    : const Color(0xFFFAFAFA),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: readOnly
-                        ? Colors.grey.shade400
-                        : hi
-                            ? const Color(0xFF5C6BC0)
-                            : Colors.grey.shade300)),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: readOnly
-                        ? Colors.grey.shade400
-                        : hi
-                            ? const Color(0xFF5C6BC0)
-                            : Colors.grey.shade300)),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(
-                    color: readOnly ? Colors.grey.shade400 : _primary,
-                    width: readOnly ? 1.0 : 1.5)),
-          ),
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: _DT.textSecondary,
+              letterSpacing: 0.6)),
+      const SizedBox(height: 4),
+      TextFormField(
+        controller: ctrl,
+        keyboardType: type,
+        readOnly: readOnly,
+        showCursor: !readOnly,
+        style: TextStyle(
+            fontSize: 13,
+            fontWeight: hi ? FontWeight.w700 : FontWeight.normal,
+            color: textStyleColor),
+        decoration: InputDecoration(
+          isDense: true,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          filled: true,
+          fillColor: inputFillColor,
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: inputBorderColor)),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: inputBorderColor)),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(
+                  color: readOnly ? inputBorderColor : _primary,
+                  width: readOnly ? 1.0 : 1.5)),
         ),
-      ]);
+      ),
+    ]);
+  }
 }
 
 class _TabBarDelegate extends SliverPersistentHeaderDelegate {
@@ -1877,7 +1941,7 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: const Color(0xFFF0F2F8),
+      color: _DT.bg,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: child, // ✅ now supports Container + TabBar
     );

@@ -4,6 +4,18 @@ import 'package:get/get.dart';
 import '../../../../app_utils/color_constants.dart';
 import '../../../../main.dart';
 import '../../../routes/app_routes.dart';
+import '../../../../services/theme_controller.dart';
+
+class _DT {
+  static ThemeController get _tc => Get.find<ThemeController>();
+  static bool get isDark => _tc.isDarkMode.value;
+
+  static Color get bg => isDark ? const Color(0xFF060A16) : const Color(0xFFF5F6FA);
+  static Color get cardBg => isDark ? const Color(0xFF0E1220) : Colors.white;
+  static Color get textPrimary => isDark ? const Color(0xFFE8EAF6) : const Color(0xFF1E293B);
+  static Color get textSecondary => isDark ? const Color(0xFF8B92A9) : const Color(0xFF64748B);
+  static Color get dividerColor => isDark ? Colors.white12 : const Color(0xFFE2E8F0);
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  ProfileView
@@ -19,6 +31,7 @@ class ProfileView extends StatelessWidget {
         : 'User';
     final String role = box.read("user_role") ?? 'worker';
     final bool isManager = role == 'manager';
+    final themeCtrl = Get.find<ThemeController>();
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: AppColor.cAppPrimaryColor,
@@ -27,193 +40,235 @@ class ProfileView extends StatelessWidget {
       systemNavigationBarIconBrightness: Brightness.light,
     ));
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        backgroundColor: AppColor.cAppPrimaryColor,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text(
-          'Profile',
-          style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 18.0,
-              color: Colors.white),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // ── Profile header ─────────────────────────────────────────
-            Container(
-              width: double.infinity,
-              padding:
-              const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-              decoration: BoxDecoration(
-                color: AppColor.cAppPrimaryColor,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(28),
-                  bottomRight: Radius.circular(28),
-                ),
-              ),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: Colors.white.withOpacity(0.25),
-                    child: Icon(
-                      isManager
-                          ? Icons.manage_accounts_rounded
-                          : Icons.engineering_rounded,
-                      size: 42,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    email,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.22),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      isManager ? 'Manager' : 'Worker',
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ],
-              ),
+    return Obx(() {
+      final isDarkTheme = _DT.isDark;
+      return Scaffold(
+        backgroundColor: _DT.bg,
+        appBar: AppBar(
+          backgroundColor: AppColor.cAppPrimaryColor,
+          elevation: 0,
+          centerTitle: true,
+          title: const Text(
+            'Profile',
+            style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 18.0,
+                color: Colors.white),
+          ),
+          actions: [
+            IconButton(
+              icon: isDarkTheme
+                  ? const Icon(Icons.light_mode_rounded, color: Colors.white)
+                  : const Icon(Icons.dark_mode_rounded, color: Colors.white),
+              onPressed: themeCtrl.toggleTheme,
+              tooltip: 'Toggle Theme',
             ),
-
-            const SizedBox(height: 24),
-
-            // ── Settings list ──────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
+          ],
+        ),
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              // ── Profile header ─────────────────────────────────────────
+              Container(
+                width: double.infinity,
+                padding:
+                const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2)),
-                  ],
+                  color: AppColor.cAppPrimaryColor,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(28),
+                    bottomRight: Radius.circular(28),
+                  ),
                 ),
                 child: Column(
                   children: [
-                    _settingsTile(
-                      icon: Icons.lock_outline,
-                      label: 'Privacy & Security',
-                      onTap: () =>
-                          Get.to(() => const PrivacySecurityView()),
-                    ),
-                    _divider(),
-                    _settingsTile(
-                      icon: Icons.notifications_outlined,
-                      label: 'Notification Preferences',
-                      onTap: () => Get.to(
-                              () => const NotificationPreferencesView()),
-                    ),
-                    _divider(),
-                    _settingsTile(
-                      icon: Icons.help_outline,
-                      label: 'Help & Support',
-                      onTap: () =>
-                          Get.to(() => const HelpSupportView()),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // ── Logout ────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2)),
-                  ],
-                ),
-                child: ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.logout_rounded,
-                        color: Colors.red, size: 22),
-                  ),
-                  title: const Text(
-                    'Log Out',
-                    style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.red,
-                        fontWeight: FontWeight.w600),
-                  ),
-                  trailing: const Icon(Icons.chevron_right,
-                      color: Colors.red),
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                        title: const Text('Log Out'),
-                        content: const Text(
-                            'Are you sure you want to log out?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: const Text('Cancel'),
-                          ),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                foregroundColor: Colors.white),
-                            onPressed: () {
-                              Navigator.pop(ctx);
-                              box.remove('user_token');
-                              box.remove('user_role');
-                              box.remove('user_id');
-                              box.remove('user_email');
-                              Get.offAllNamed(AppRoutes.login);
-                            },
-                            child: const Text('Log Out'),
-                          ),
-                        ],
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.white.withOpacity(0.25),
+                      child: Icon(
+                        isManager
+                            ? Icons.manage_accounts_rounded
+                            : Icons.engineering_rounded,
+                        size: 42,
+                        color: Colors.white,
                       ),
-                    );
-                  },
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      email,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.22),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        isManager ? 'Manager' : 'Worker',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 32),
-          ],
+
+              const SizedBox(height: 24),
+
+              // ── Settings list ──────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: _DT.cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withOpacity(isDarkTheme ? 0.35 : 0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      _themeToggleTile(themeCtrl),
+                      _divider(),
+                      _settingsTile(
+                        icon: Icons.lock_outline,
+                        label: 'Privacy & Security',
+                        onTap: () =>
+                            Get.to(() => const PrivacySecurityView()),
+                      ),
+                      _divider(),
+                      _settingsTile(
+                        icon: Icons.notifications_outlined,
+                        label: 'Notification Preferences',
+                        onTap: () => Get.to(
+                                () => const NotificationPreferencesView()),
+                      ),
+                      _divider(),
+                      _settingsTile(
+                        icon: Icons.help_outline,
+                        label: 'Help & Support',
+                        onTap: () =>
+                            Get.to(() => const HelpSupportView()),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Logout ────────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: _DT.cardBg,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withOpacity(isDarkTheme ? 0.35 : 0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.logout_rounded,
+                          color: Colors.red, size: 22),
+                    ),
+                    title: const Text(
+                      'Log Out',
+                      style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.red,
+                          fontWeight: FontWeight.w600),
+                    ),
+                    trailing: const Icon(Icons.chevron_right,
+                        color: Colors.red),
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                          title: const Text('Log Out'),
+                          content: const Text(
+                              'Are you sure you want to log out?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white),
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                box.remove('user_token');
+                                box.remove('user_role');
+                                box.remove('user_id');
+                                box.remove('user_email');
+                                Get.offAllNamed(AppRoutes.login);
+                              },
+                              child: const Text('Log Out'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _themeToggleTile(ThemeController themeCtrl) {
+    return SwitchListTile.adaptive(
+      value: _DT.isDark,
+      onChanged: (val) => themeCtrl.toggleTheme(),
+      secondary: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColor.cAppPrimaryColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          _DT.isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+          color: AppColor.cAppPrimaryColor,
+          size: 22,
         ),
       ),
+      title: Text(
+        'Dark Theme',
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+          color: _DT.textPrimary,
+        ),
+      ),
+      activeColor: AppColor.cAppPrimaryColor,
     );
   }
 
@@ -231,16 +286,21 @@ class ProfileView extends StatelessWidget {
         ),
         child: Icon(icon, color: AppColor.cAppPrimaryColor, size: 22),
       ),
-      title: Text(label,
-          style: const TextStyle(
-              fontSize: 15, fontWeight: FontWeight.w500)),
-      trailing: Icon(Icons.chevron_right, color: Colors.grey.shade400),
+      title: Text(
+        label,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+          color: _DT.textPrimary,
+        ),
+      ),
+      trailing: Icon(Icons.chevron_right, color: _DT.isDark ? Colors.grey.shade500 : Colors.grey.shade400),
       onTap: onTap,
     );
   }
 
   Widget _divider() =>
-      const Divider(height: 1, indent: 60, endIndent: 16);
+      Divider(height: 1, indent: 60, endIndent: 16, color: _DT.dividerColor);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -291,16 +351,16 @@ class _ToggleRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1E293B)),
+                        color: _DT.textPrimary),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                        fontSize: 11, color: Color(0xFF94A3B8)),
+                    style: TextStyle(
+                        fontSize: 11, color: _DT.textSecondary),
                   ),
                 ],
               ),
@@ -360,23 +420,23 @@ class _InfoRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1E293B)),
+                        color: _DT.textPrimary),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                        fontSize: 11, color: Color(0xFF94A3B8)),
+                    style: TextStyle(
+                        fontSize: 11, color: _DT.textSecondary),
                   ),
                 ],
               ),
             ),
             if (onTap != null)
               Icon(Icons.chevron_right,
-                  color: Colors.grey.shade400, size: 20),
+                  color: _DT.isDark ? Colors.grey.shade500 : Colors.grey.shade400, size: 20),
           ],
         ),
       ),
@@ -403,21 +463,21 @@ class _SectionCard extends StatelessWidget {
               padding: const EdgeInsets.only(left: 4, bottom: 8),
               child: Text(
                 title!.toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF94A3B8),
+                    color: _DT.textSecondary,
                     letterSpacing: 0.8),
               ),
             ),
           ],
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _DT.cardBg,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withOpacity(_DT.isDark ? 0.35 : 0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2)),
               ],
@@ -427,8 +487,8 @@ class _SectionCard extends StatelessWidget {
                 for (int i = 0; i < children.length; i++) ...[
                   children[i],
                   if (i < children.length - 1)
-                    const Divider(
-                        height: 1, indent: 70, endIndent: 16),
+                    Divider(
+                        height: 1, indent: 70, endIndent: 16, color: _DT.dividerColor),
                 ],
               ],
             ),
@@ -449,29 +509,31 @@ class _SettingsScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
-      appBar: AppBar(
-        backgroundColor: AppColor.cAppPrimaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          title,
-          style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 18,
-              color: Colors.white),
+    return Obx(() {
+      return Scaffold(
+        backgroundColor: _DT.bg,
+        appBar: AppBar(
+          backgroundColor: AppColor.cAppPrimaryColor,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+          title: Text(
+            title,
+            style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 18,
+                color: Colors.white),
+          ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: slivers,
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: slivers,
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 

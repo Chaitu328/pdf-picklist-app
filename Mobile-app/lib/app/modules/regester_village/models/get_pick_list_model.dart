@@ -64,7 +64,7 @@ class PickListModel {
       pickListNo: (json['pick_list_no'] as String?)?.isNotEmpty == true
           ? json['pick_list_no'] as String
           : (json['code'] as String? ?? ''),
-      orderNo: json['order_no'] as String? ?? '',
+      orderNo: json['order_number'] as String? ?? json['order_no'] as String? ?? '',
       clientId: json['clientId'] != null
           ? ClientWorkerInfo.fromJson(json['clientId'] as Map<String, dynamic>)
           : null,
