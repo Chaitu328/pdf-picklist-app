@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'app/routes/app_routes.dart';
 import 'package:flutter/services.dart';
+import 'services/theme_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,7 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
   await GetStorage.init();
+  Get.put(ThemeController());
   runApp(
     GetMaterialApp(
       debugShowCheckedModeBanner: false,
