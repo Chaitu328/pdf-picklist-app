@@ -116,7 +116,7 @@ class PickListModel {
   static Future<bool> delete(String pickListNo, String token) async {
     try {
       final response = await http.delete(
-        Uri.parse('https://pick-list.onrender.com/api/picklist/$pickListNo'),
+        Uri.parse('${ApiConstants.baseURL}/picklist/$pickListNo'),
         headers: {
           'Authorization': 'Bearer $token',
         },

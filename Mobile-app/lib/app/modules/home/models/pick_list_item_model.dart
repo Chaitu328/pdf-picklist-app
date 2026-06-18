@@ -119,7 +119,7 @@ static Future<bool> delete(String pickListNo, String token) async {
   try {
     // The API requires the pick_list_no in the URL
     final response = await http.delete(
-      Uri.parse('https://pick-list.onrender.com/api/picklist/$pickListNo'),
+      Uri.parse('${ApiConstants.baseURL}/picklist/$pickListNo'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ static Future<bool> delete(String pickListNo, String token) async {
     );
 
     print("DELETE STATUS: ${response.statusCode}");
-    print("DELETE URL: https://pick-list.onrender.com/api/picklist/$pickListNo");
+    print("DELETE URL: ${ApiConstants.baseURL}/picklist/$pickListNo");
 
     return response.statusCode == 200 || response.statusCode == 204;
   } catch (e) {
