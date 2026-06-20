@@ -9,7 +9,8 @@ const {
   deletePickListByNumber,
   updateScan,
   proceedWithShortage,
-  getAllPickLists
+  getAllPickLists,
+  setPartQuantity
 } = require("../Controllers/pickListController");
 
 const {
@@ -25,6 +26,9 @@ router.patch("/:id/assign", authenticateToken, assignPickList);
 
 // Updated: Scan one item at a time
 router.patch("/:id/scan", authenticateToken, updateScan);
+
+// New: Set quantity directly (manual override)
+router.patch("/:id/set-quantity", authenticateToken, setPartQuantity);
 
 // New: Triggered when worker forces completion despite shortage
 router.post("/:id/proceed", authenticateToken, proceedWithShortage);

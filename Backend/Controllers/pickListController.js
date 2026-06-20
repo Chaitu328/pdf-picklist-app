@@ -382,6 +382,82 @@ const deletePickListByNumber = async (req, res) => {
   }
 };
 
+// WORKER SET DIRECT PART QUANTITY (Manual Sync/Save)
+const setPartQuantity = async (req, res) => {
+  try {
+    const { partno, quantity } = req.body;
+    const picklist = await PickList.findById(req.params.id);
+
+    if (!picklist) return res.status(404).json({ message: "Picklist not found" });
+
+    // Validate that the worker is assigned to this picklist
+    const isAssigned = picklist.workerIds && picklist.workerIds.some(id => id.toString() === req.user.id);
+    if (!isAssigned && picklist.workerId?.toString() !== req.user.id) {
+      return res.status(403).json({ message: "You are not assigned to this picklist." });
+    }
+
+    // Find target part
+    const part = picklist.parts.find(p => p.partno === partno);
+    if (!part) return res.status(404).json({ message: "Part not found in this picklist" });
+
+    const targetQty = Number(quantity);
+    if (isNaN(targetQty) || targetQty < 0) {
+      return res.status(400).json({ message: "Invalid quantity value." });
+    }
+
+    // Excess Validation Check
+    if (targetQty > part.req_qty) {
+      return res.status(400).json({ 
+        message: `Quantity error. Allocated quantity cannot exceed required amount (${part.req_qty}).` 
+      });
+    }
+
+    const diff = targetQty - part.allo_qty;
+    if (diff > 0) {
+      for (let i = 0; i < diff; i++) {
+        part.scanned_items.push({ 
+          unique_id: null, 
+          entry_method: "Manual",
+          workerId: req.user.id
+        });
+      }
+    } else if (diff < 0) {
+      const toRemove = Math.abs(diff);
+      for (let i = 0; i < toRemove; i++) {
+        part.scanned_items.pop();
+      }
+    }
+    part.allo_qty = targetQty;
+
+    // Update part status
+    if (part.allo_qty === part.req_qty) {
+      part.status = "completed";
+    } else if (part.allo_qty === 0) {
+      part.status = "pending";
+    } else {
+      part.status = "partial";
+    }
+
+    picklist.status = "processing";
+    await picklist.save();
+
+    const populatedPicklist = await PickList.findById(picklist._id)
+      .populate("clientId", "name email")
+      .populate("workerId", "name email")
+      .populate("workerIds", "name email");
+
+    const myInfo = populatedPicklist.workerIds.find(w => w._id.toString() === req.user.id);
+    const transformed = {
+      ...populatedPicklist.toObject(),
+      workerId: myInfo
+    };
+
+    res.json(transformed);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 module.exports = {
   createPickList,
   assignPickList,
@@ -390,5 +466,6 @@ module.exports = {
   updateScan,
   proceedWithShortage,
   getAllPickLists,
-  getAdminSummary
+  getAdminSummary,
+  setPartQuantity
 };

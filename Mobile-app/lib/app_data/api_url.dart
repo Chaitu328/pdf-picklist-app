@@ -7,6 +7,7 @@ class ApiConstants {
   static const String getPickList = "$baseURL/picklist/";
   static String assignPickList(String id) => "$baseURL/picklist/$id/assign";
   static String scanPickList(String id) => "$baseURL/picklist/$id/scan";
+  static String setPartQuantity(String id) => "$baseURL/picklist/$id/set-quantity";
   static const String deletePickList = "$baseURL/picklist/delete/";
   static String proceedPickList(String id) => "$baseURL/picklist/$id/proceed";
   static String deliverRoutes = "$baseURL/delivery-routes";

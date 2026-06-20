@@ -56,6 +56,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
   // ── Per-part counters ─────────────────────────────────────────────────────
   late List<int> _scanCounts; // current allocated qty per part
   late List<int> _reqCounts; // required qty per part
+  late List<bool> _isDirty; // tracks unsaved manual modifications
 
   @override
   void initState() {
@@ -68,16 +69,9 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
     _scanCounts =
         pickList.parts.map((p) => p.alloQty > 0 ? p.alloQty : 0).toList();
     _reqCounts = pickList.parts.map((p) => p.reqQty).toList();
+    _isDirty = List.filled(pickList.parts.length, false);
 
-    _focusNodes = List.generate(pickList.parts.length, (i) {
-      final node = FocusNode();
-      node.addListener(() {
-        if (!node.hasFocus) {
-          _syncManualQtyToServer(i);
-        }
-      });
-      return node;
-    });
+    _focusNodes = List.generate(pickList.parts.length, (i) => FocusNode());
 
     // Fetch immediately on view open to get latest data from other workers
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -138,19 +132,86 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
     _alloControllers[index].text = _scanCounts[index].toString();
   }
 
+  Future<void> _syncFieldQty(int index) async {
+    final activePickList = controller.allLists.firstWhereOrNull((p) => p.id == pickList.id) ?? pickList;
+    final text = _alloControllers[index].text.trim();
+    final enteredQty = int.tryParse(text) ?? 0;
+
+    if (enteredQty < 0) {
+      _showSnackbar(
+        message: "Quantity cannot be negative",
+        color: Colors.red,
+        icon: Icons.error_outline,
+      );
+      return;
+    }
+
+    if (enteredQty > activePickList.parts[index].reqQty) {
+      _showSnackbar(
+        message: "Quantity cannot exceed required (${activePickList.parts[index].reqQty})",
+        color: Colors.red,
+        icon: Icons.error_outline,
+      );
+      return;
+    }
+
+    final success = await controller.setPartQuantity(
+      pickListId: activePickList.id,
+      partNo: activePickList.parts[index].partno,
+      quantity: enteredQty,
+      context: context,
+    );
+
+    if (success) {
+      setState(() {
+        _isDirty[index] = false;
+      });
+    }
+  }
+
+  Widget? _buildSyncButton(int index) {
+    final activePickList = controller.allLists.firstWhereOrNull((p) => p.id == pickList.id) ?? pickList;
+    final serverQty = activePickList.parts[index].alloQty;
+    final textVal = _alloControllers[index].text.trim();
+    final localQty = int.tryParse(textVal) ?? 0;
+
+    // Check if there are unsaved changes
+    final hasChanges = _isDirty[index] || (localQty != serverQty);
+
+    if (!hasChanges) {
+      if (serverQty == activePickList.parts[index].reqQty) {
+        return const Icon(
+          Icons.check_circle_rounded,
+          color: Color(0xFF16A34A),
+          size: 18,
+        );
+      }
+      return null;
+    }
+
+    return GestureDetector(
+      onTap: () => _syncFieldQty(index),
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: AppColor.cPrimaryButtonColor,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: const Icon(
+          Icons.sync,
+          color: Colors.white,
+          size: 14,
+        ),
+      ),
+    );
+  }
+
   bool _isFormValid() {
     for (int i = 0; i < _alloControllers.length; i++) {
       final text = _alloControllers[i].text.trim();
-
-      // ❌ empty
-      if (text.isEmpty) return false;
-
       final value = int.tryParse(text) ?? 0;
-
-      // ❌ zero or invalid
-      if (value <= 0) return false;
-
-      // ❌ more than required
+      if (value < 0) return false;
       if (value > _reqCounts[i]) return false;
     }
     return true;
@@ -559,19 +620,19 @@ Future<void> _submit() async {
       final activePickList = controller.allLists.firstWhereOrNull((p) => p.id == pickList.id) ?? pickList;
 
       for (int i = 0; i < activePickList.parts.length; i++) {
-        int enteredQty = int.tryParse(_alloControllers[i].text.trim()) ?? 0;
-        int alreadySavedQty = activePickList.parts[i].alloQty;
-
-        if (enteredQty > alreadySavedQty) {
-          int needed = enteredQty - alreadySavedQty;
-
-          await controller.updatePartStatus(
+        if (_isDirty[i]) {
+          int enteredQty = int.tryParse(_alloControllers[i].text.trim()) ?? 0;
+          final success = await controller.setPartQuantity(
             pickListId: activePickList.id,
             partNo: activePickList.parts[i].partno,
-            isManual: true,
-            quantity: needed,
+            quantity: enteredQty,
             context: context,
           );
+          if (success) {
+            setState(() {
+              _isDirty[i] = false;
+            });
+          }
         }
       }
 
@@ -627,7 +688,7 @@ Future<void> _submit() async {
       // Keep local state and controllers in sync with server-side quantities
       for (int i = 0; i < activePickList.parts.length; i++) {
         final serverQty = activePickList.parts[i].alloQty;
-        if (!_focusNodes[i].hasFocus) {
+        if (!_isDirty[i]) {
           _scanCounts[i] = serverQty;
           _alloControllers[i].text = serverQty > 0 ? serverQty.toString() : '';
         }
@@ -1618,7 +1679,6 @@ Future<void> _submit() async {
 
   Widget _alloQtyField(int index) {
     final limitReached = _isLimitReached(index);
-    final part = pickList.parts[index];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1650,31 +1710,31 @@ Future<void> _submit() async {
             controller: _alloControllers[index],
             focusNode: _focusNodes[index],
             keyboardType: TextInputType.number,
-            readOnly: limitReached,
-            onFieldSubmitted: (_) => _syncManualQtyToServer(index),
+            readOnly: false,
+            onFieldSubmitted: (_) => _syncFieldQty(index),
             onChanged: (val) {
               final v = int.tryParse(val.trim()) ?? 0;
               setState(() {
                 _scanCounts[index] = v;
+                _isDirty[index] = true;
               });
             },
-            // onChanged: (val) {
-            //   final v = int.tryParse(val.trim()) ?? 0;
-            //   setState(() => _scanCounts[index] = v);
-            // },
             style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
-                color: limitReached
-                    ? AppColor.cPrimaryButtonColor
-                    : AppColor.cPrimaryButtonColor),
-            decoration: const InputDecoration(
+                color: AppColor.cPrimaryButtonColor),
+            decoration: InputDecoration(
               isDense: true,
               contentPadding:
-                  EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               border: InputBorder.none,
               hintText: '0',
-              hintStyle: TextStyle(color: Color(0xFFCBD5E1), fontSize: 14),
+              hintStyle: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 14),
+              suffixIconConstraints: const BoxConstraints(
+                minWidth: 32,
+                minHeight: 32,
+              ),
+              suffixIcon: _buildSyncButton(index),
             ),
           ),
         ),

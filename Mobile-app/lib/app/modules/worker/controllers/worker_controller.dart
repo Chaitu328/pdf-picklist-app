@@ -118,6 +118,49 @@ Future<void> updatePartStatus({
     _showSnack(context, "Connection error", Colors.red);
   }
 }
+
+  Future<bool> setPartQuantity({
+    required String pickListId,
+    required String partNo,
+    required int quantity,
+    required BuildContext context,
+  }) async {
+    try {
+      isLoading.value = true;
+      final body = {
+        "partno": partNo,
+        "quantity": quantity,
+      };
+
+      final response = await _apiService.patchWithBody(
+        ApiConstants.setPartQuantity(pickListId),
+        body,
+      );
+
+      if (response != null &&
+          (response.statusCode == 200 || response.statusCode == 201)) {
+        if (response.data != null) {
+          final updated = PickListModel.fromJson(response.data as Map<String, dynamic>);
+          final idx = allLists.indexWhere((p) => p.id == updated.id);
+          if (idx != -1) {
+            allLists[idx] = updated;
+          }
+        }
+        _showSnack(context, "Quantity synchronized successfully", Colors.green.shade700);
+        return true;
+      } else {
+        String msg = response?.data['message'] ?? "Failed to set quantity";
+        _showSnack(context, "❌ $msg", Colors.red);
+        return false;
+      }
+    } catch (e) {
+      _showSnack(context, "Connection error", Colors.red);
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   // Future<void> submitPickList(
   //   BuildContext context,
   //   String pickListId,
