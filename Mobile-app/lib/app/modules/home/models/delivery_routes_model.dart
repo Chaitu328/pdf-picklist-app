@@ -61,7 +61,7 @@ class Route {
     String? networkCode;
     String? companyName;
     String? city;
-    Type? deliveryDay;
+    String? deliveryDay;
     DateTime? createdAt;
     DateTime? updatedAt;
     int? v;
@@ -82,7 +82,7 @@ class Route {
         networkCode: json["networkCode"],
         companyName: json["companyName"],
         city: json["city"],
-        deliveryDay: typeValues.map[json["deliveryDay"]]!,
+        deliveryDay: json["deliveryDay"]?.toString(),
         createdAt: json["createdAt"] == null ? null : DateTime.parse(json["createdAt"]),
         updatedAt: json["updatedAt"] == null ? null : DateTime.parse(json["updatedAt"]),
         v: json["__v"],
@@ -93,37 +93,15 @@ class Route {
         "networkCode": networkCode,
         "companyName": companyName,
         "city": city,
-        "deliveryDay": typeValues.reverse[deliveryDay],
+        "deliveryDay": deliveryDay,
         "createdAt": createdAt?.toIso8601String(),
         "updatedAt": updatedAt?.toIso8601String(),
         "__v": v,
     };
 }
 
-enum Type {
-    FRIDAY,
-    LOCAL,
-    MONDAY_TUESDAY,
-    SATURDAY,
-    SATURDAY_SUNDAY,
-    TRANSPORT,
-    WEDNESDAY_FRIDAY,
-    WEDNESDAY_THURSDAY
-}
-
-final typeValues = EnumValues({
-    "FRIDAY": Type.FRIDAY,
-    "LOCAL": Type.LOCAL,
-    "MONDAY & TUESDAY": Type.MONDAY_TUESDAY,
-    "SATURDAY": Type.SATURDAY,
-    "SATURDAY & SUNDAY": Type.SATURDAY_SUNDAY,
-    "TRANSPORT": Type.TRANSPORT,
-    "WEDNESDAY & FRIDAY": Type.WEDNESDAY_FRIDAY,
-    "WEDNESDAY & THURSDAY": Type.WEDNESDAY_THURSDAY
-});
-
 class SpecialGroup {
-    Type? type;
+    String? type;
     List<Route>? routes;
 
     SpecialGroup({
@@ -132,24 +110,13 @@ class SpecialGroup {
     });
 
     factory SpecialGroup.fromJson(Map<String, dynamic> json) => SpecialGroup(
-        type: typeValues.map[json["type"]]!,
+        type: json["type"]?.toString(),
         routes: json["routes"] == null ? [] : List<Route>.from(json["routes"]!.map((x) => Route.fromJson(x))),
     );
 
     Map<String, dynamic> toJson() => {
-        "type": typeValues.reverse[type],
+        "type": type,
         "routes": routes == null ? [] : List<dynamic>.from(routes!.map((x) => x.toJson())),
     };
 }
 
-class EnumValues<T> {
-    Map<String, T> map;
-    late Map<T, String> reverseMap;
-
-    EnumValues(this.map);
-
-    Map<T, String> get reverse {
-            reverseMap = map.map((k, v) => MapEntry(v, k));
-            return reverseMap;
-    }
-}
