@@ -201,7 +201,25 @@ Future<void> submitPickList(
   } finally {
     isLoading.value = false;
   }
-}
+  Future<bool> proceedPickList(BuildContext context, String pickListId) async {
+    try {
+      final response = await _apiService.postRaw(
+        ApiConstants.proceedPickList(pickListId),
+        {},
+      );
+      if (response != null && response.statusCode == 200) {
+        await fetchAllLists();
+        return true;
+      } else {
+        _showSnack(context, "Failed to submit pick list", Colors.red);
+        return false;
+      }
+    } catch (e) {
+      _showSnack(context, "Connection error: $e", Colors.red);
+      return false;
+    }
+  }
+
   void _showSnack(BuildContext context, String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message, style: const TextStyle(color: Colors.white)),

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../regester_village/models/get_pick_list_model.dart';
 import '../controllers/worker_controller.dart';
@@ -28,6 +29,7 @@ class WorkerSubmitView extends StatefulWidget {
 class _WorkerSubmitViewState extends State<WorkerSubmitView> {
   late PickListModel pickList;
   late List<TextEditingController> _alloControllers;
+  late List<FocusNode> _focusNodes;
   final WorkerController controller = Get.find<WorkerController>();
   Timer? _refreshTimer;
 
@@ -66,6 +68,16 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
         pickList.parts.map((p) => p.alloQty > 0 ? p.alloQty : 0).toList();
     _reqCounts = pickList.parts.map((p) => p.reqQty).toList();
 
+    _focusNodes = List.generate(pickList.parts.length, (i) {
+      final node = FocusNode();
+      node.addListener(() {
+        if (!node.hasFocus) {
+          _syncManualQtyToServer(i);
+        }
+      });
+      return node;
+    });
+
     // Fetch immediately on view open to get latest data from other workers
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.fetchAllLists();
@@ -82,12 +94,38 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    for (final fn in _focusNodes) fn.dispose();
     for (final c in _alloControllers) c.dispose();
     _scannerController?.dispose();
     super.dispose();
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  void _syncManualQtyToServer(int index) {
+    final activePickList = controller.allLists.firstWhereOrNull((p) => p.id == pickList.id) ?? pickList;
+    final text = _alloControllers[index].text.trim();
+    if (text.isEmpty) return;
+
+    final enteredQty = int.tryParse(text) ?? 0;
+    final serverQty = activePickList.parts[index].alloQty;
+
+    if (enteredQty > serverQty) {
+      final needed = enteredQty - serverQty;
+
+      setState(() {
+        _scanCounts[index] = enteredQty;
+      });
+
+      controller.updatePartStatus(
+        pickListId: activePickList.id,
+        partNo: activePickList.parts[index].partno,
+        isManual: true,
+        quantity: needed,
+        context: context,
+      );
+    }
+  }
 
   bool _isLimitReached(int index) =>
       _reqCounts[index] > 0 && _scanCounts[index] >= _reqCounts[index];
@@ -536,11 +574,12 @@ Future<void> _submit() async {
         }
       }
 
-      await controller.fetchAllLists();
-
-      setState(() => _isSubmitted = true);
-
-      Get.back();
+      // Finalize picklist status on the backend
+      final success = await controller.proceedPickList(context, activePickList.id);
+      if (success) {
+        setState(() => _isSubmitted = true);
+        Get.back();
+      }
     } catch (e) {
       // handle error if needed
     } finally {
@@ -587,7 +626,7 @@ Future<void> _submit() async {
       // Keep local state and controllers in sync with server-side quantities
       for (int i = 0; i < activePickList.parts.length; i++) {
         final serverQty = activePickList.parts[i].alloQty;
-        if (serverQty > _scanCounts[i]) {
+        if (!_focusNodes[i].hasFocus) {
           _scanCounts[i] = serverQty;
           _alloControllers[i].text = serverQty > 0 ? serverQty.toString() : '';
         }
@@ -1578,6 +1617,7 @@ Future<void> _submit() async {
 
   Widget _alloQtyField(int index) {
     final limitReached = _isLimitReached(index);
+    final part = pickList.parts[index];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1607,9 +1647,10 @@ Future<void> _submit() async {
           ),
           child: TextFormField(
             controller: _alloControllers[index],
+            focusNode: _focusNodes[index],
             keyboardType: TextInputType.number,
-            // readOnly: limitReached,
-            readOnly: limitReached || _scanCounts[index] > 0,
+            readOnly: limitReached,
+            onFieldSubmitted: (_) => _syncManualQtyToServer(index),
             onChanged: (val) {
               final v = int.tryParse(val.trim()) ?? 0;
               setState(() {
