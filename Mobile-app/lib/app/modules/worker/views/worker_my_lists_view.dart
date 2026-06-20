@@ -621,7 +621,7 @@ class _MyPickListCardState extends State<_MyPickListCard>
                         borderRadius: BorderRadius.circular(9),
                       ),
                       child: Text(
-                        p.pickListNo,
+                        p.orderNo.isNotEmpty ? p.orderNo : p.pickListNo,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,

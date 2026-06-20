@@ -10,7 +10,8 @@ const {
   updateScan,
   proceedWithShortage,
   getAllPickLists,
-  setPartQuantity
+  setPartQuantity,
+  getAdminSummary
 } = require("../Controllers/pickListController");
 
 const {
@@ -23,6 +24,9 @@ const {
 router.post("/", authenticateToken, createPickList);
 router.get("/", authenticateToken, getAllPickLists);
 router.patch("/:id/assign", authenticateToken, assignPickList);
+
+// New: Summary details showing worker-wise scanning statistics for Admin panel
+router.get("/admin/summary", authenticateToken, getAdminSummary);
 
 // Updated: Scan one item at a time
 router.patch("/:id/scan", authenticateToken, updateScan);

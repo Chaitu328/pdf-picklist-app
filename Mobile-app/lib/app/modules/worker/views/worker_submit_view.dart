@@ -157,6 +157,33 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
       setState(() {
         _isDirty[index] = false;
       });
+
+      final req = activePickList.parts[index].reqQty;
+      String status;
+      Color color;
+      IconData icon;
+
+      if (enteredQty == req) {
+        status = "Completed";
+        color = const Color(0xFF16A34A);
+        icon = Icons.check_circle_rounded;
+      } else if (enteredQty < req) {
+        status = "Shortage";
+        color = const Color(0xFFEA580C);
+        icon = Icons.warning_rounded;
+      } else {
+        status = "Excess";
+        color = const Color(0xFF2563EB);
+        icon = Icons.info_rounded;
+      }
+
+      _showValidationDialog(
+        status: status,
+        color: color,
+        icon: icon,
+        requiredQty: req,
+        allocatedQty: enteredQty,
+      );
     }
   }
 
@@ -311,11 +338,13 @@ void _parseAndIncrement(String raw) {
     _overlayScannedQty = qrNetQty;
     _overlayAllocatedQty = requiredQty;
 
-    // ✅ MATCH LOGIC
+    // ✅ COMPARISON LOGIC
     if (qrNetQty == requiredQty) {
       _handleQtyMatchSuccess(idx, qrNetQty, uniqueId);
+    } else if (qrNetQty < requiredQty) {
+      _handleQtyShortageSuccess(idx, qrNetQty, uniqueId);
     } else {
-      _showStatusOverlay(status: "Shortage", color: Colors.orange);
+      _handleQtyExcessSuccess(idx, qrNetQty, uniqueId);
     }
   }
 // ══════════════════════════════════════════════════════════════════════════
@@ -348,6 +377,8 @@ void _parseAndIncrement(String raw) {
       statusIcon = Icons.check_circle_rounded;
     } else if (_currentStatusColor == Colors.orange) {
       statusIcon = Icons.warning_rounded;
+    } else if (_currentStatusColor == Colors.blue) {
+      statusIcon = Icons.info_rounded;
     } else {
       statusIcon = Icons.cancel_rounded;
     }
@@ -464,28 +495,32 @@ void _parseAndIncrement(String raw) {
                         return;
                       }
 
-                      // ✅ MATCH CASE
-                      if (_currentStatusText == "MATCHED") {
+                      // ✅ COMPLETED CASE
+                      if (_currentStatusText == "Completed") {
                         _closeScanner();
                       }
-
-                      // ✅ SHORTAGE CASE (IMPORTANT 🔥)
-                      else if (_currentStatusText == "Shortage") {
+                      // ✅ SHORTAGE OR EXCESS CASE
+                      else if (_currentStatusText == "Shortage" || _currentStatusText == "Excess") {
                         setState(() {
-                          // 🔥 Fill scanned NET QTY
                           _scanCounts[idx] = _overlayScannedQty;
                           _alloControllers[idx].text =
                               _overlayScannedQty.toString();
                         });
 
+                        controller.setPartQuantity(
+                          pickListId: pickList.id,
+                          partNo: pickList.parts[idx].partno,
+                          quantity: _overlayScannedQty,
+                          context: context,
+                        );
+
                         _closeScanner();
                       }
-
                       // ❌ Other errors
                       else {
                         _rescan();
                       }
-},
+                    },
                     // onPressed: () {
                     //   setState(() => _isOverlayVisible = false);
 
@@ -501,9 +536,9 @@ void _parseAndIncrement(String raw) {
                           borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Text(
-                      // _currentStatusColor == Colors.green ? "ADD" : "TRY AGAIN",
-                      (_currentStatusText == "MATCHED" ||
-                              _currentStatusText == "Shortage")
+                      (_currentStatusText == "Completed" ||
+                              _currentStatusText == "Shortage" ||
+                              _currentStatusText == "Excess")
                           ? "ADD"
                           : "TRY AGAIN",
                       style: const TextStyle(
@@ -548,8 +583,30 @@ void _parseAndIncrement(String raw) {
       _overlayAllocatedQty = _reqCounts[idx];
 
       // ✅ SHOW SUCCESS SCREEN WITH ADD BUTTON
-      _currentStatusText = "MATCHED";
+      _currentStatusText = "Completed";
       _currentStatusColor = Colors.green;
+      _isOverlayVisible = true;
+    });
+  }
+
+// Case B: QTY LESS (Shortage)
+  void _handleQtyShortageSuccess(int idx, int matchedQty, String uniqueId) {
+    setState(() {
+      _overlayScannedQty = matchedQty;
+      _overlayAllocatedQty = _reqCounts[idx];
+      _currentStatusText = "Shortage";
+      _currentStatusColor = Colors.orange;
+      _isOverlayVisible = true;
+    });
+  }
+
+// Case C: QTY MORE (Excess)
+  void _handleQtyExcessSuccess(int idx, int matchedQty, String uniqueId) {
+    setState(() {
+      _overlayScannedQty = matchedQty;
+      _overlayAllocatedQty = _reqCounts[idx];
+      _currentStatusText = "Excess";
+      _currentStatusColor = Colors.blue;
       _isOverlayVisible = true;
     });
   }
@@ -666,6 +723,86 @@ Future<void> _submit() async {
     ));
   }
 
+  void _showValidationDialog({
+    required String status,
+    required Color color,
+    required IconData icon,
+    required int requiredQty,
+    required int allocatedQty,
+  }) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 64, color: color),
+                const SizedBox(height: 16),
+                Text(
+                  status.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Column(
+                        children: [
+                          const Text("ALLOCATED", style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                          const SizedBox(height: 4),
+                          Text("$allocatedQty", style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: color)),
+                        ],
+                      ),
+                      Container(height: 35, width: 1.5, color: const Color(0xFFCBD5E1)),
+                      Column(
+                        children: [
+                          const Text("REQUIRED", style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                          const SizedBox(height: 4),
+                          Text("$requiredQty", style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: const Color(0xFF1E293B))),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: color,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: const Text("OK", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   // ══════════════════════════════════════════════════════════════════════════
   //  BUILD
   // ══════════════════════════════════════════════════════════════════════════
@@ -696,7 +833,7 @@ Future<void> _submit() async {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(pickList.pickListNo,
+              Text(pickList.orderNo.isNotEmpty ? pickList.orderNo : pickList.pickListNo,
                   style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -1452,7 +1589,7 @@ Future<void> _submit() async {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(pickList.pickListNo,
+                Text(pickList.orderNo.isNotEmpty ? pickList.orderNo : pickList.pickListNo,
                     style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 15,

@@ -511,7 +511,7 @@ class _AvailablePickListCardState extends State<_AvailablePickListCard>
                             color: _accent[0].withOpacity(0.45),
                             blurRadius: 10, offset: const Offset(0, 3))],
                       ),
-                      child: Text(p.pickListNo,
+                      child: Text(p.orderNo.isNotEmpty ? p.orderNo : p.pickListNo,
                           style: const TextStyle(color: Colors.white,
                               fontWeight: FontWeight.w800,
                               fontSize: 13, letterSpacing: 0.5)),
