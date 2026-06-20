@@ -109,7 +109,7 @@ class ViewPickList extends StatelessWidget {
         const SizedBox(width: 10),
         ShaderMask(
           shaderCallback: (bounds) =>
-              const LinearGradient(colors: _DT.violetTeal).createShader(bounds),
+              LinearGradient(colors: _DT.violetTeal).createShader(bounds),
           child: const Text(
             'Pick Lists',
             style: TextStyle(
@@ -326,7 +326,7 @@ class _LogoBadge extends StatelessWidget {
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
             colors: _DT.violetTeal,
             begin: Alignment.topLeft,
             end: Alignment.bottomRight),

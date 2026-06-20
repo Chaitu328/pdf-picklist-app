@@ -95,7 +95,7 @@ class WorkerAvailableView extends GetView<WorkerController> {
         Container(
           width: 36, height: 36,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               colors: _DT.emeraldMint,
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -112,7 +112,7 @@ class WorkerAvailableView extends GetView<WorkerController> {
         const SizedBox(width: 10),
         ShaderMask(
           shaderCallback: (bounds) =>
-              const LinearGradient(colors: _DT.emeraldMint).createShader(bounds),
+              LinearGradient(colors: _DT.emeraldMint).createShader(bounds),
           child: const Text('Available Lists',
               style: TextStyle(color: Colors.white, fontSize: 22,
                   fontWeight: FontWeight.w800, letterSpacing: 0.3)),
@@ -212,7 +212,7 @@ class _StatsBanner extends StatelessWidget {
         child: Row(children: [
           ShaderMask(
             shaderCallback: (b) =>
-                const LinearGradient(colors: _DT.emeraldMint).createShader(b),
+                LinearGradient(colors: _DT.emeraldMint).createShader(b),
             child: Text('$count',
                 style: const TextStyle(fontSize: 32,
                     fontWeight: FontWeight.w900, color: Colors.white)),

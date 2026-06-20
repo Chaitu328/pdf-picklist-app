@@ -1273,7 +1273,7 @@ class _HelpSupportViewState extends State<HelpSupportView> {
         _SectionCard(
           title: 'App Info',
           children: [
-            const _InfoRow(
+            _InfoRow(
               icon: Icons.info_outline_rounded,
               iconBg: AppColor.cAppBackgroundColor,
               iconColor: AppColor.cPrimaryButtonColor,

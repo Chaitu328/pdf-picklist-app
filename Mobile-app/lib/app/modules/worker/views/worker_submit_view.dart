@@ -1359,7 +1359,7 @@ Future<void> _submit() async {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text('SCAN',
+              child: Text('SCAN',
                   style: TextStyle(
                       color: AppColor.cPrimaryButtonColor,
                       fontSize: 11,
