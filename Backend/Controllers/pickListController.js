@@ -163,10 +163,10 @@ const assignPickList = async (req, res) => {
   }
 };
 
-// WORKER UPDATE SCANNED QTY (Processes ONE item at a time)
+// WORKER UPDATE SCANNED QTY (Processes ONE or multiple items at a time)
 const updateScan = async (req, res) => {
   try {
-    const { partno, unique_id, entry_method } = req.body;
+    const { partno, unique_id, entry_method, quantity } = req.body;
     const picklist = await PickList.findById(req.params.id);
 
     if (!picklist) return res.status(404).json({ message: "Picklist not found" });
@@ -191,20 +191,32 @@ const updateScan = async (req, res) => {
     const part = picklist.parts.find(p => p.partno === partno);
     if (!part) return res.status(404).json({ message: "Part not found in this picklist" });
 
+    const qtyToAdd = quantity ? Number(quantity) : 1;
+
     // 3. Excess Validation Check
-    if (part.allo_qty >= part.req_qty) {
+    if (part.allo_qty + qtyToAdd > part.req_qty) {
       return res.status(400).json({ 
         message: "Quantity error. Allocated quantity exceeds required amount. Scan rejected." 
       });
     }
 
     // 4. Update data (records workerId for the scan)
-    part.scanned_items.push({ 
-      unique_id: unique_id || null, 
-      entry_method,
-      workerId: req.user.id
-    });
-    part.allo_qty += 1;
+    if (entry_method === "Manual") {
+      for (let i = 0; i < qtyToAdd; i++) {
+        part.scanned_items.push({ 
+          unique_id: null, 
+          entry_method,
+          workerId: req.user.id
+        });
+      }
+    } else {
+      part.scanned_items.push({ 
+        unique_id: unique_id || null, 
+        entry_method,
+        workerId: req.user.id
+      });
+    }
+    part.allo_qty += qtyToAdd;
 
     // Update part status
     if (part.allo_qty === part.req_qty) {

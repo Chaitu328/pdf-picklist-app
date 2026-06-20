@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../app/modules/home/views/pick_list_view.dart';
-import '../../app/modules/home/views/manager_audit_view.dart';
 import '../../app/modules/profile/views/profile_view.dart';
 import '../../app/modules/regester_village/views/picklist_view.dart';
 import '../../app/modules/worker/controllers/worker_controller.dart';
 import '../../app/modules/worker/views/worker_available_view.dart';
 import '../../app/modules/worker/views/worker_my_lists_view.dart';
-import '../../app/modules/worker/views/worker_inward_list_view.dart';
 import '../../app_utils/color_constants.dart';
 import '../../main.dart';
 import 'bottom_navigation_controller.dart';
@@ -39,14 +37,12 @@ class BottomMainBar extends StatelessWidget {
     final List<_NavItem> managerNavItems = [
       _NavItem(icon: Icons.upload_file_rounded, label: 'Upload List'),
       _NavItem(icon: Icons.list_alt_rounded, label: 'All Lists'),
-      _NavItem(icon: Icons.analytics_rounded, label: 'Audits'),
       _NavItem(icon: Icons.person_rounded, label: 'Profile'),
     ];
 
     final List<_NavItem> workerNavItems = [
       _NavItem(icon: Icons.assignment_outlined, label: 'Available'),
       _NavItem(icon: Icons.assignment_turned_in_outlined, label: 'My Lists'),
-      _NavItem(icon: Icons.downloading_rounded, label: 'Inwards'),
       _NavItem(icon: Icons.person_rounded, label: 'Profile'),
     ];
 
@@ -64,9 +60,6 @@ class BottomMainBar extends StatelessWidget {
           case 1:
             currentPage = ViewPickList();
             break;
-          case 2:
-            currentPage = const ManagerAuditView();
-            break;
           default:
             currentPage = ProfileView();
         }
@@ -77,9 +70,6 @@ class BottomMainBar extends StatelessWidget {
             break;
           case 1:
             currentPage = const WorkerMyListsView();
-            break;
-          case 2:
-            currentPage = const WorkerInwardListView();
             break;
           default:
             currentPage = ProfileView();

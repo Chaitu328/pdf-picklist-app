@@ -11,6 +11,11 @@ const ScannedItemSchema = new mongoose.Schema({
     enum: ["QR", "Manual"],
     required: true
   },
+  workerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+  },
   scannedAt: {
     type: Date,
     default: Date.now

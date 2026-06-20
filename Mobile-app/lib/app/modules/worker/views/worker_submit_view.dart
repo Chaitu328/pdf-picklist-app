@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -28,6 +29,7 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
   late PickListModel pickList;
   late List<TextEditingController> _alloControllers;
   final WorkerController controller = Get.find<WorkerController>();
+  Timer? _refreshTimer;
 
   // ── Scanner state ─────────────────────────────────────────────────────────
   bool _scannerOpen = false;
@@ -63,10 +65,23 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
     _scanCounts =
         pickList.parts.map((p) => p.alloQty > 0 ? p.alloQty : 0).toList();
     _reqCounts = pickList.parts.map((p) => p.reqQty).toList();
+
+    // Fetch immediately on view open to get latest data from other workers
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.fetchAllLists();
+    });
+
+    // Start background polling every 5 seconds to sync concurrent workers
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (mounted && !_scannerOpen && !controller.isLoading.value) {
+        controller.fetchAllLists();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     for (final c in _alloControllers) c.dispose();
     _scannerController?.dispose();
     super.dispose();
@@ -502,23 +517,24 @@ Future<void> _submit() async {
     controller.isLoading.value = true; // 🔥 START LOADING IMMEDIATELY
 
     try {
-    for (int i = 0; i < pickList.parts.length; i++) {
-      int enteredQty = int.tryParse(_alloControllers[i].text.trim()) ?? 0;
-      int alreadySavedQty = pickList.parts[i].alloQty;
+      final activePickList = controller.allLists.firstWhereOrNull((p) => p.id == pickList.id) ?? pickList;
 
-      if (enteredQty > alreadySavedQty) {
-        int needed = enteredQty - alreadySavedQty;
+      for (int i = 0; i < activePickList.parts.length; i++) {
+        int enteredQty = int.tryParse(_alloControllers[i].text.trim()) ?? 0;
+        int alreadySavedQty = activePickList.parts[i].alloQty;
 
-        for (int j = 0; j < needed; j++) {
+        if (enteredQty > alreadySavedQty) {
+          int needed = enteredQty - alreadySavedQty;
+
           await controller.updatePartStatus(
-            pickListId: pickList.id,
-            partNo: pickList.parts[i].partno,
+            pickListId: activePickList.id,
+            partNo: activePickList.parts[i].partno,
             isManual: true,
+            quantity: needed,
             context: context,
           );
         }
       }
-    }
 
       await controller.fetchAllLists();
 
@@ -565,35 +581,51 @@ Future<void> _submit() async {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF2563EB),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(pickList.pickListNo,
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white)),
-            Text('${pickList.parts.length} parts',
-                style: const TextStyle(fontSize: 11, color: Colors.white70)),
+    return Obx(() {
+      final activePickList = controller.allLists.firstWhereOrNull((p) => p.id == pickList.id) ?? pickList;
+
+      // Keep local state and controllers in sync with server-side quantities
+      for (int i = 0; i < activePickList.parts.length; i++) {
+        final serverQty = activePickList.parts[i].alloQty;
+        if (serverQty > _scanCounts[i]) {
+          _scanCounts[i] = serverQty;
+          _alloControllers[i].text = serverQty > 0 ? serverQty.toString() : '';
+        }
+      }
+
+      _reqCounts = activePickList.parts.map((p) => p.reqQty).toList();
+      pickList = activePickList;
+
+      return Scaffold(
+        backgroundColor: const Color(0xFFF5F7FA),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF2563EB),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(pickList.pickListNo,
+                  style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white)),
+              Text('${pickList.parts.length} parts',
+                  style: const TextStyle(fontSize: 11, color: Colors.white70)),
+            ],
+          ),
+          actions: [
+            IconButton(
+              onPressed: _openScanner,
+              icon: const Icon(Icons.qr_code_scanner_rounded),
+              tooltip: 'Scan QR to update quantities',
+            ),
           ],
         ),
-        actions: [
-          IconButton(
-            onPressed: _openScanner,
-            icon: const Icon(Icons.qr_code_scanner_rounded),
-            tooltip: 'Scan QR to update quantities',
-          ),
-        ],
-      ),
-      body: _scannerOpen ? _buildScannerView() : _buildMainContent(),
-      bottomNavigationBar: _scannerOpen ? null : _buildSubmitBar(),
-    );
+        body: _scannerOpen ? _buildScannerView() : _buildMainContent(),
+        bottomNavigationBar: _scannerOpen ? null : _buildSubmitBar(),
+      );
+    });
   }
 
   // ══════════════════════════════════════════════════════════════════════════

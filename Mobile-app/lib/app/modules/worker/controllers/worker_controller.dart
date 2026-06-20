@@ -75,6 +75,7 @@ Future<void> updatePartStatus({
   required String partNo,
   required bool isManual,
   String? uniqueId,
+  int? quantity,
   required BuildContext context,
 }) async {
   try {
@@ -82,6 +83,7 @@ Future<void> updatePartStatus({
       "partno": partNo,
       "unique_id": isManual ? null : uniqueId,
       "entry_method": isManual ? "Manual" : "QR",
+      if (quantity != null) "quantity": quantity,
     };
 
     final response = await _apiService.patchWithBody(
@@ -91,7 +93,14 @@ Future<void> updatePartStatus({
 
     if (response != null &&
         (response.statusCode == 200 || response.statusCode == 201)) {
-      // ✅ success
+      // ✅ Parse returned picklist and update in allLists reactively
+      if (response.data != null) {
+        final updated = PickListModel.fromJson(response.data as Map<String, dynamic>);
+        final idx = allLists.indexWhere((p) => p.id == updated.id);
+        if (idx != -1) {
+          allLists[idx] = updated;
+        }
+      }
     } else {
       String msg = response?.data['message'] ?? "Failed";
 
@@ -100,10 +109,8 @@ Future<void> updatePartStatus({
       } else if (msg.contains("Quantity")) {
         _showSnack(context, "❌ Quantity exceeded", Colors.red);
       } else {
-          // _showSnack(context, msg, Colors.red);
           print(
               "Unexpected response: ${response?.statusCode} - ${response?.data}");
-          // _showSnack(context, "Unexpected error: $msg", Colors.red);
       }
     }
   } catch (e) {
