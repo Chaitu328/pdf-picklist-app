@@ -14,17 +14,17 @@ class _DT {
   static ThemeController get _tc => Get.find<ThemeController>();
   static bool get isDark => _tc.isDarkMode.value;
 
-  static Color get bg   => isDark ? const Color(0xFF060A16) : const Color(0xFFF5F7FA);
+  static Color get bg   => isDark ? const Color(0xFF060A16) : AppColor.cAppBackgroundColor;
   static Color get bg2  => isDark ? const Color(0xFF0E1220) : Colors.white;
   static Color get bg3  => isDark ? const Color(0xFF141829) : const Color(0xFFE2E8F0);
   static Color get bg4  => isDark ? const Color(0xFF1A1F35) : const Color(0xFFCBD5E1);
 
-  static const List<Color> violetTeal  = [Color(0xFF6C63FF), Color(0xFF3ECFCF)];
-  static const List<Color> indigoCyan  = [Color(0xFF4158D0), Color(0xFF0FBCF9)];
-  static const List<Color> roseAmber   = [Color(0xFFFF6B6B), Color(0xFFFFD93D)];
-  static const List<Color> emeraldMint = [Color(0xFF0FCF7D), Color(0xFF43E8A8)];
-  static const List<Color> purpleBlue  = [Color(0xFF9B8FFF), Color(0xFF3ECFCF)];
-  static const List<Color> sunsetOrange= [Color(0xFFFF6B35), Color(0xFFFF9A3C)];
+  static List<Color> get violetTeal  => [AppColor.cPrimaryButtonColor, AppColor.cAppPrimaryColor];
+  static List<Color> get indigoCyan  => [const Color(0xFF2E7D32), const Color(0xFF81C784)];
+  static List<Color> get roseAmber   => [const Color(0xFF1B5E20), const Color(0xFF4CAF50)];
+  static List<Color> get emeraldMint => [const Color(0xFF0FCF7D), const Color(0xFF43E8A8)];
+  static List<Color> get purpleBlue  => [const Color(0xFF33691E), const Color(0xFF8BC34A)];
+  static List<Color> get sunsetOrange=> [const Color(0xFF00796B), const Color(0xFF4DB6AC)];
 
   static const green = Color(0xFF2ECC71);
   static const amber = Color(0xFFF39C12);
@@ -394,7 +394,7 @@ class _AvailablePickListCardState extends State<_AvailablePickListCard>
   late Animation<double> _rotateAnim;
   bool _isExpanded = false;
 
-  static const _cardGradients = [
+  List<List<Color>> get _cardGradients => [
     _DT.emeraldMint,
     _DT.indigoCyan,
     _DT.violetTeal,

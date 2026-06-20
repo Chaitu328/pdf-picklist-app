@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../app_utils/color_constants.dart';
 import '../../../../app_data/api_url.dart';
 import '../../../../app_data/base_api_service.dart';
 import '../../../../main.dart';
@@ -172,7 +173,7 @@ Future<void> submitPickList(
     }
 
     // 👇 Show BEFORE API call
-    _showSnack(context, submittingMessage, Colors.blue);
+    _showSnack(context, submittingMessage, AppColor.cPrimaryButtonColor);
 
     final response = await _apiService.patchWithBody(
       ApiConstants.scanPickList(pickListId),

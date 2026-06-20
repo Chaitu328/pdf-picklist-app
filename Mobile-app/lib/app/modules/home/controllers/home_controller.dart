@@ -204,7 +204,7 @@ Future<void> fetchPickList() async {
       } else {
         scanStatus.value = "Excess";
         Get.snackbar("Info", "Excess ℹ️",
-            backgroundColor: Colors.blue, colorText: Colors.white);
+            backgroundColor: AppColor.cPrimaryButtonColor, colorText: Colors.white);
       }
 
       scanMessage.value =

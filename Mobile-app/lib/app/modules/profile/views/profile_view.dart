@@ -619,8 +619,8 @@ class _PrivacySecurityViewState extends State<PrivacySecurityView> {
             ),
             _ToggleRow(
               icon: Icons.track_changes_rounded,
-              iconBg: const Color(0xFFEFF6FF),
-              iconColor: const Color(0xFF2563EB),
+              iconBg: AppColor.cAppBackgroundColor,
+              iconColor: AppColor.cPrimaryButtonColor,
               title: 'Activity Tracking',
               subtitle: 'Track in-app usage for improvements',
               value: _activityTracking,
@@ -664,8 +664,8 @@ class _PrivacySecurityViewState extends State<PrivacySecurityView> {
           children: [
             _ToggleRow(
               icon: Icons.fingerprint_rounded,
-              iconBg: const Color(0xFFEFF6FF),
-              iconColor: const Color(0xFF2563EB),
+              iconBg: AppColor.cAppBackgroundColor,
+              iconColor: AppColor.cPrimaryButtonColor,
               title: 'Biometric Login',
               subtitle: 'Use fingerprint or Face ID to sign in',
               value: _biometricLogin,
@@ -714,8 +714,8 @@ class _PrivacySecurityViewState extends State<PrivacySecurityView> {
           children: [
             _InfoRow(
               icon: Icons.password_rounded,
-              iconBg: const Color(0xFFEFF6FF),
-              iconColor: const Color(0xFF2563EB),
+              iconBg: AppColor.cAppBackgroundColor,
+              iconColor: AppColor.cPrimaryButtonColor,
               title: 'Change Password',
               subtitle: 'Update your account password',
               onTap: () => _showChangePasswordSheet(),
@@ -919,8 +919,8 @@ class _NotificationPreferencesViewState
           children: [
             _ToggleRow(
               icon: Icons.notifications_active_rounded,
-              iconBg: const Color(0xFFEFF6FF),
-              iconColor: const Color(0xFF2563EB),
+              iconBg: AppColor.cAppBackgroundColor,
+              iconColor: AppColor.cPrimaryButtonColor,
               title: 'Push Notifications',
               subtitle: 'Receive alerts on your device',
               value: _pushEnabled,
@@ -995,8 +995,8 @@ class _NotificationPreferencesViewState
             ),
             _ToggleRow(
               icon: Icons.volume_up_rounded,
-              iconBg: const Color(0xFFEFF6FF),
-              iconColor: const Color(0xFF2563EB),
+              iconBg: AppColor.cAppBackgroundColor,
+              iconColor: AppColor.cPrimaryButtonColor,
               title: 'Sound',
               subtitle: 'Play a sound for in-app alerts',
               value: _inAppSounds,
@@ -1032,8 +1032,8 @@ class _NotificationPreferencesViewState
           children: [
             _ToggleRow(
               icon: Icons.email_outlined,
-              iconBg: const Color(0xFFEFF6FF),
-              iconColor: const Color(0xFF2563EB),
+              iconBg: AppColor.cAppBackgroundColor,
+              iconColor: AppColor.cPrimaryButtonColor,
               title: 'Daily Summary',
               subtitle: 'Receive a daily email digest',
               value: _emailSummary,
@@ -1095,8 +1095,8 @@ class _HelpSupportViewState extends State<HelpSupportView> {
           children: [
             _InfoRow(
               icon: Icons.menu_book_rounded,
-              iconBg: const Color(0xFFEFF6FF),
-              iconColor: const Color(0xFF2563EB),
+              iconBg: AppColor.cAppBackgroundColor,
+              iconColor: AppColor.cPrimaryButtonColor,
               title: 'User Guide',
               subtitle: 'Step-by-step app walkthrough',
               onTap: () => _showGuideSheet(context),
@@ -1127,8 +1127,8 @@ class _HelpSupportViewState extends State<HelpSupportView> {
           children: [
             _InfoRow(
               icon: Icons.chat_bubble_outline_rounded,
-              iconBg: const Color(0xFFEFF6FF),
-              iconColor: const Color(0xFF2563EB),
+              iconBg: AppColor.cAppBackgroundColor,
+              iconColor: AppColor.cPrimaryButtonColor,
               title: 'Live Chat',
               subtitle: 'Chat with support — avg. 2 min wait',
               onTap: () {},
@@ -1275,8 +1275,8 @@ class _HelpSupportViewState extends State<HelpSupportView> {
           children: [
             const _InfoRow(
               icon: Icons.info_outline_rounded,
-              iconBg: Color(0xFFEFF6FF),
-              iconColor: Color(0xFF2563EB),
+              iconBg: AppColor.cAppBackgroundColor,
+              iconColor: AppColor.cPrimaryButtonColor,
               title: 'App Version',
               subtitle: '1.0.0 (Build 100)',
             ),

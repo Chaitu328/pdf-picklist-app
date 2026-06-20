@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../../../app_utils/color_constants.dart';
 import '../../regester_village/models/get_pick_list_model.dart';
 import '../controllers/worker_controller.dart';
 
@@ -636,9 +637,9 @@ Future<void> _submit() async {
       pickList = activePickList;
 
       return Scaffold(
-        backgroundColor: const Color(0xFFF5F7FA),
+        backgroundColor: AppColor.cAppBackgroundColor,
         appBar: AppBar(
-          backgroundColor: const Color(0xFF2563EB),
+          backgroundColor: AppColor.cAppPrimaryColor,
           foregroundColor: Colors.white,
           elevation: 0,
           title: Column(
@@ -714,7 +715,7 @@ Future<void> _submit() async {
                     height: 240,
                     decoration: BoxDecoration(
                       border:
-                          Border.all(color: const Color(0xFF60A5FA), width: 3),
+                          Border.all(color: AppColor.cPrimaryButtonColor, width: 3),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Stack(
@@ -784,7 +785,7 @@ Future<void> _submit() async {
                           child: const Text('Cancel',
                               style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF2563EB),
+                                  color: Colors.white,
                                   fontSize: 15)),
                         ),
                       ),
@@ -946,7 +947,7 @@ Future<void> _submit() async {
                         child: _overlayBtn(
                           label: 'Scan Again (+1)',
                           icon: Icons.qr_code_scanner_rounded,
-                          color: const Color(0xFF2563EB),
+                          color: AppColor.cPrimaryButtonColor,
                           textColor: Colors.white,
                         ),
                       ),
@@ -971,14 +972,14 @@ Future<void> _submit() async {
             ? const Color(0xFFFEF2F2)
             : complete
                 ? const Color(0xFFF0FDF4)
-                : const Color(0xFFEFF6FF),
+                : const Color(0xFFE8F5E9),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: r.error
               ? const Color(0xFFFCA5A5)
               : complete
                   ? const Color(0xFF86EFAC)
-                  : const Color(0xFF93C5FD),
+                  : AppColor.cAppPrimaryColor,
         ),
       ),
       child: Row(
@@ -1039,7 +1040,7 @@ Future<void> _submit() async {
               style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF2563EB))),
+                  color: AppColor.cPrimaryButtonColor))),
           const SizedBox(height: 3),
           ClipRRect(
             borderRadius: BorderRadius.circular(3),
@@ -1048,7 +1049,7 @@ Future<void> _submit() async {
               minHeight: 4,
               backgroundColor: const Color(0xFFE2E8F0),
               valueColor: AlwaysStoppedAnimation<Color>(
-                pct >= 1.0 ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
+                pct >= 1.0 ? AppColor.cPrimaryButtonColor : AppColor.cAppPrimaryColor,
               ),
             ),
           ),
@@ -1262,7 +1263,7 @@ Future<void> _submit() async {
                         child: _overlayBtn(
                           label: 'Scan Another Part',
                           icon: Icons.qr_code_scanner_rounded,
-                          color: const Color(0xFF2563EB),
+                          color: AppColor.cPrimaryButtonColor,
                           textColor: Colors.white,
                         ),
                       ),
@@ -1308,15 +1309,15 @@ Future<void> _submit() async {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF1D4ED8), Color(0xFF2563EB)],
+          gradient: LinearGradient(
+            colors: [AppColor.cPrimaryButtonColor, AppColor.cAppPrimaryColor],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-                color: const Color(0xFF2563EB).withOpacity(0.35),
+                color: AppColor.cPrimaryButtonColor.withOpacity(0.35),
                 blurRadius: 12,
                 offset: const Offset(0, 4)),
           ],
@@ -1360,7 +1361,7 @@ Future<void> _submit() async {
               ),
               child: const Text('SCAN',
                   style: TextStyle(
-                      color: Color(0xFF1D4ED8),
+                      color: AppColor.cPrimaryButtonColor,
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1)),
@@ -1392,8 +1393,8 @@ Future<void> _submit() async {
               color: const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.receipt_long,
-                color: Color(0xFF2563EB), size: 22),
+            child: Icon(Icons.receipt_long,
+                color: AppColor.cPrimaryButtonColor, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1466,8 +1467,8 @@ Future<void> _submit() async {
                 height: 26,
                 decoration: BoxDecoration(
                   color: limitReached
-                      ? const Color(0xFF16A34A)
-                      : const Color(0xFF2563EB),
+                      ? AppColor.cPrimaryButtonColor
+                      : AppColor.cAppPrimaryColor,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 alignment: Alignment.center,
@@ -1524,12 +1525,12 @@ Future<void> _submit() async {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: AppColor.cAppBackgroundColor,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text('$scanned/$req',
-                      style: const TextStyle(
-                          color: Color(0xFF2563EB),
+                      style: TextStyle(
+                          color: AppColor.cPrimaryButtonColor,
                           fontSize: 10,
                           fontWeight: FontWeight.w700)),
                 ),
@@ -1566,7 +1567,7 @@ Future<void> _submit() async {
             minHeight: 5,
             backgroundColor: const Color(0xFFE2E8F0),
             valueColor: AlwaysStoppedAnimation<Color>(
-              limitReached ? const Color(0xFF16A34A) : const Color(0xFF2563EB),
+              limitReached ? AppColor.cPrimaryButtonColor : AppColor.cAppPrimaryColor,
             ),
           ),
         ),
@@ -1627,21 +1628,21 @@ Future<void> _submit() async {
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: limitReached
-                  ? const Color(0xFF16A34A)
-                  : const Color(0xFF2563EB),
+                  ? AppColor.cPrimaryButtonColor
+                  : AppColor.cAppPrimaryColor,
               letterSpacing: 0.5),
         ),
         const SizedBox(height: 5),
         Container(
           decoration: BoxDecoration(
             color: limitReached
-                ? const Color(0xFFF0FDF4)
-                : const Color(0xFFEFF6FF),
+                ? AppColor.cAppBackgroundColor.withOpacity(0.5)
+                : AppColor.cAppBackgroundColor,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: limitReached
-                  ? const Color(0xFF86EFAC)
-                  : const Color(0xFF93C5FD),
+                  ? AppColor.cPrimaryButtonColor
+                  : AppColor.cAppPrimaryColor,
               width: 1.5,
             ),
           ),
@@ -1665,8 +1666,8 @@ Future<void> _submit() async {
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
                 color: limitReached
-                    ? const Color(0xFF16A34A)
-                    : const Color(0xFF1D4ED8)),
+                    ? AppColor.cPrimaryButtonColor
+                    : AppColor.cPrimaryButtonColor)),
             decoration: const InputDecoration(
               isDense: true,
               contentPadding:
@@ -1710,10 +1711,10 @@ Widget _buildSubmitBar() {
               height: 52,
               decoration: BoxDecoration(
                 color: controller.isLoading.value
-                    ? const Color(0xFF2563EB) // 🔵 keep blue during loading
+                    ? AppColor.cPrimaryButtonColor // 🔵 keep green during loading
                     : isDisabled
                         ? Colors.grey.shade400 // ⚪ disabled
-                        : const Color(0xFF2563EB),
+                        : AppColor.cPrimaryButtonColor,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -1767,7 +1768,7 @@ Widget _buildSubmitBar() {
         borderRadius: BorderRadius.circular(12),
         border: border != null ? Border.all(color: border) : null,
         boxShadow:
-            color == const Color(0xFF2563EB) || color == const Color(0xFFEA580C)
+            color == AppColor.cPrimaryButtonColor || color == const Color(0xFFEA580C)
                 ? [
                     BoxShadow(
                         color: color.withOpacity(0.35),

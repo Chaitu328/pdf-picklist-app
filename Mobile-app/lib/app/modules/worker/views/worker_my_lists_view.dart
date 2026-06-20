@@ -11,7 +11,7 @@ import '../../../../services/theme_controller.dart';
 // COLOR TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
 
-Color get _kBg1 => Get.find<ThemeController>().isDarkMode.value ? const Color(0xFF07090F) : const Color(0xFFF5F7FA);
+Color get _kBg1 => Get.find<ThemeController>().isDarkMode.value ? const Color(0xFF07090F) : AppColor.cAppBackgroundColor;
 Color get _kBg2 => Get.find<ThemeController>().isDarkMode.value ? const Color(0xFF0D1017) : Colors.white;
 Color get _kBg3 => Get.find<ThemeController>().isDarkMode.value ? const Color(0xFF131720) : const Color(0xFFE2E8F0);
 Color get _kBg4 => Get.find<ThemeController>().isDarkMode.value ? const Color(0xFF1B2030) : const Color(0xFFCBD5E1);
@@ -28,12 +28,12 @@ const _kGreen = Color(0xFF2ECC71);
 const _kAmber = Color(0xFFF39C12);
 const _kBlue = Color(0xFF4FC3F7);
 
-const _kAccents = <List<Color>>[
-  [Color(0xFF6C63FF), Color(0xFF3ECFCF)],
-  [Color(0xFF4158D0), Color(0xFF0FBCF9)],
-  [Color(0xFF0FCF7D), Color(0xFF43E8A8)],
-  [Color(0xFFFF6B6B), Color(0xFFFFD93D)],
-  [Color(0xFF9B8FFF), Color(0xFF3ECFCF)],
+final _kAccents = <List<Color>>[
+  [AppColor.cPrimaryButtonColor, AppColor.cAppPrimaryColor],
+  [const Color(0xFF2E7D32), const Color(0xFF81C784)],
+  [const Color(0xFF1B5E20), const Color(0xFF4CAF50)],
+  [const Color(0xFF00796B), const Color(0xFF4DB6AC)],
+  [const Color(0xFF33691E), const Color(0xFF8BC34A)],
 ];
 
 List<Color> _cardAccent(int index) => _kAccents[index % _kAccents.length];
@@ -107,13 +107,13 @@ class WorkerMyListsView extends GetView<WorkerController> {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF6C63FF), Color(0xFF3ECFCF)],
+              gradient: LinearGradient(
+                colors: [AppColor.cPrimaryButtonColor, AppColor.cAppPrimaryColor],
               ),
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF6C63FF).withOpacity(0.5),
+                  color: AppColor.cPrimaryButtonColor.withOpacity(0.5),
                   blurRadius: 12,
                   offset: const Offset(0, 3),
                 ),
@@ -127,8 +127,8 @@ class WorkerMyListsView extends GetView<WorkerController> {
           ),
           const SizedBox(width: 10),
           ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
-              colors: [Color(0xFF6C63FF), Color(0xFF3ECFCF)],
+            shaderCallback: (bounds) => LinearGradient(
+              colors: [AppColor.cPrimaryButtonColor, AppColor.cAppPrimaryColor],
             ).createShader(bounds),
             child: const Text(
               'My Pick Lists',
@@ -179,7 +179,7 @@ class WorkerMyListsView extends GetView<WorkerController> {
     }
 
     return RefreshIndicator(
-      color: const Color(0xFF6C63FF),
+      color: AppColor.cPrimaryButtonColor,
       backgroundColor: _kBg3,
       onRefresh: controller.fetchAllLists,
       child: CustomScrollView(

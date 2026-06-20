@@ -457,7 +457,7 @@ class _PickListsByOrderScreenState extends State<PickListsByOrderScreen> {
       case 'completed':
         return Colors.green.shade600;
       case 'processing':
-        return Colors.blue.shade600;
+        return AppColor.cPrimaryButtonColor;
       case 'cancelled':
         return Colors.red.shade500;
       default:
@@ -470,7 +470,7 @@ class _PickListsByOrderScreenState extends State<PickListsByOrderScreen> {
       case 'completed':
         return Colors.green.shade50;
       case 'processing':
-        return Colors.blue.shade50;
+        return AppColor.cAppBackgroundColor;
       case 'cancelled':
         return Colors.red.shade50;
       default:
