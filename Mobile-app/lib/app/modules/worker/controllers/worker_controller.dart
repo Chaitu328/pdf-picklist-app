@@ -202,6 +202,8 @@ Future<void> submitPickList(
   } finally {
     isLoading.value = false;
   }
+}
+
   Future<bool> proceedPickList(BuildContext context, String pickListId) async {
     try {
       final response = await _apiService.postRaw(

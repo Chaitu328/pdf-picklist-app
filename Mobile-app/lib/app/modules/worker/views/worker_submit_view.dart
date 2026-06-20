@@ -1037,10 +1037,10 @@ Future<void> _submit() async {
       child: Column(
         children: [
           Text('${(pct * 100).round()}%',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: AppColor.cPrimaryButtonColor))),
+                  color: AppColor.cPrimaryButtonColor)),
           const SizedBox(height: 3),
           ClipRRect(
             borderRadius: BorderRadius.circular(3),
@@ -1667,7 +1667,7 @@ Future<void> _submit() async {
                 fontWeight: FontWeight.w800,
                 color: limitReached
                     ? AppColor.cPrimaryButtonColor
-                    : AppColor.cPrimaryButtonColor)),
+                    : AppColor.cPrimaryButtonColor),
             decoration: const InputDecoration(
               isDense: true,
               contentPadding:
