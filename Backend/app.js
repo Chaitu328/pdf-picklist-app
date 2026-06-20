@@ -7,6 +7,9 @@ require('dotenv').config();
 const dbconnect = require('./db');
 const userRoutes = require('./Routes/Routes'); 
 const pickListRoutes = require("./Routes/pickListRoutes");
+const deliveryRouteRoutes = require("./Routes/deliveryRouteRoutes");
+const auditRoutes = require("./Routes/auditRoutes");
+const inwardRoutes = require("./routes/inwardRoutes");
 
 const port = process.env.PORT || 3000;
 
@@ -34,6 +37,9 @@ dbconnect();
 // Use routes
 app.use('/api', userRoutes);
 app.use("/api/picklist", pickListRoutes);
+app.use("/api/delivery-routes", deliveryRouteRoutes);
+app.use("/api/audit", auditRoutes);
+app.use("/api/inward", inwardRoutes);
 
 // WebSocket connection for Admin/Manager
 io.on("connection", (socket) => {
