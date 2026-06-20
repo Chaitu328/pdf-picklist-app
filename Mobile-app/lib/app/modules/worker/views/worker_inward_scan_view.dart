@@ -96,7 +96,7 @@ class _WorkerInwardScanViewState extends State<WorkerInwardScanView> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        side: const BorderSide(color: AppColor.cPrimaryButtonColor),
+                        side: BorderSide(color: AppColor.cPrimaryButtonColor),
                       ),
                       onPressed: () async {
                         Navigator.pop(context);
@@ -109,8 +109,8 @@ class _WorkerInwardScanViewState extends State<WorkerInwardScanView> {
                         );
                         if (success) _refreshLocalData();
                       },
-                      icon: const Icon(Icons.add_rounded, color: AppColor.cPrimaryButtonColor),
-                      label: const Text("Manual Add", style: TextStyle(color: AppColor.cPrimaryButtonColor, fontWeight: FontWeight.bold)),
+                      icon: Icon(Icons.add_rounded, color: AppColor.cPrimaryButtonColor),
+                      label: Text("Manual Add", style: TextStyle(color: AppColor.cPrimaryButtonColor, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],

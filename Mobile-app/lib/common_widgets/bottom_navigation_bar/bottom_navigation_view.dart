@@ -4,8 +4,7 @@ import 'package:get/get.dart';
 import '../../app/modules/home/views/pick_list_view.dart';
 import '../../app/modules/home/views/manager_audit_view.dart';
 import '../../app/modules/profile/views/profile_view.dart';
-import '../../app/modules/regester_village/views/picklist_view.dart'
-    hide ViewPickList;
+import '../../app/modules/regester_village/views/picklist_view.dart';
 import '../../app/modules/worker/controllers/worker_controller.dart';
 import '../../app/modules/worker/views/worker_available_view.dart';
 import '../../app/modules/worker/views/worker_my_lists_view.dart';
