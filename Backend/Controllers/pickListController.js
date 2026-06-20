@@ -193,13 +193,6 @@ const updateScan = async (req, res) => {
 
     const qtyToAdd = quantity ? Number(quantity) : 1;
 
-    // 3. Excess Validation Check
-    if (part.allo_qty + qtyToAdd > part.req_qty) {
-      return res.status(400).json({ 
-        message: "Quantity error. Allocated quantity exceeds required amount. Scan rejected." 
-      });
-    }
-
     // 4. Update data (records workerId for the scan)
     if (entry_method === "Manual") {
       for (let i = 0; i < qtyToAdd; i++) {
@@ -221,6 +214,8 @@ const updateScan = async (req, res) => {
     // Update part status
     if (part.allo_qty === part.req_qty) {
       part.status = "completed";
+    } else if (part.allo_qty > part.req_qty) {
+      part.status = "excess";
     } else {
       part.status = "partial";
     }
@@ -405,13 +400,6 @@ const setPartQuantity = async (req, res) => {
       return res.status(400).json({ message: "Invalid quantity value." });
     }
 
-    // Excess Validation Check
-    if (targetQty > part.req_qty) {
-      return res.status(400).json({ 
-        message: `Quantity error. Allocated quantity cannot exceed required amount (${part.req_qty}).` 
-      });
-    }
-
     const diff = targetQty - part.allo_qty;
     if (diff > 0) {
       for (let i = 0; i < diff; i++) {
@@ -432,6 +420,8 @@ const setPartQuantity = async (req, res) => {
     // Update part status
     if (part.allo_qty === part.req_qty) {
       part.status = "completed";
+    } else if (part.allo_qty > part.req_qty) {
+      part.status = "excess";
     } else if (part.allo_qty === 0) {
       part.status = "pending";
     } else {

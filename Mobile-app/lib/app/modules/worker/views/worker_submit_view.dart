@@ -146,15 +146,6 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
       return;
     }
 
-    if (enteredQty > activePickList.parts[index].reqQty) {
-      _showSnackbar(
-        message: "Quantity cannot exceed required (${activePickList.parts[index].reqQty})",
-        color: Colors.red,
-        icon: Icons.error_outline,
-      );
-      return;
-    }
-
     final success = await controller.setPartQuantity(
       pickListId: activePickList.id,
       partNo: activePickList.parts[index].partno,
@@ -212,7 +203,6 @@ class _WorkerSubmitViewState extends State<WorkerSubmitView> {
       final text = _alloControllers[i].text.trim();
       final value = int.tryParse(text) ?? 0;
       if (value < 0) return false;
-      if (value > _reqCounts[i]) return false;
     }
     return true;
   }
