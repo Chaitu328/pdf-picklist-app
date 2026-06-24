@@ -45,7 +45,7 @@ router.get("/:id/report/excel", authenticateToken, downloadExcelReport);
 router.get("/:id/report/csv", authenticateToken, downloadCSVReport);
 
 // deletions
-router.delete("/delete", deleteAllPickLists);
-router.delete("/:pickListNumber", deletePickListByNumber);
+router.delete("/delete", authenticateToken ,deleteAllPickLists);
+router.delete("/:pickListNumber",authenticateToken , deletePickListByNumber);
 
 module.exports = router;

@@ -184,7 +184,7 @@ export default function PickListDetail() {
     try {
       setLoading(true);
       const res = await fetch(
-        "https://pick-list.onrender.com/api/picklist",
+        "http://localhost:3000/api/picklist",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -210,10 +210,10 @@ export default function PickListDetail() {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const deleteId = data._id;
+      const deleteId = data.pick_list_no;
 
       const res = await fetch(
-        `https://pick-list.onrender.com/api/picklist/${deleteId}`,
+        `http://localhost:3000/api/picklist/${deleteId}`,
         {
           method: "DELETE",
           headers: {

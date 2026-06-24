@@ -26,7 +26,7 @@ import { useNavigate } from "react-router-dom";
    CONSTANTS & CONFIG
    ═══════════════════════════════════════════════════════════════ */
 
-const API_BASE = "https://pick-list.onrender.com/api";
+const API_BASE = "http://localhost:3000/api";
 const ROUTES = {
   workers: "/app/workers",
   picklists: "/app/picklists",

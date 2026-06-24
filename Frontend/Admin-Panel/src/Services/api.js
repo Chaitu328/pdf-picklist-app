@@ -1,5 +1,5 @@
 // src/services/api.js
-const API_BASE = "https://pick-list.onrender.com/api";
+const API_BASE = "http://localhost:3000/api";
 
 export async function fetchPicklists(token) {
   const res = await fetch(`${API_BASE}/picklist`, {

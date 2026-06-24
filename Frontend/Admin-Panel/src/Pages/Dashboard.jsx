@@ -438,7 +438,7 @@ export default function Dashboard() {
   const fetchDashboard = async () => {
     try {
       const pickRes = await fetch(
-        "https://pick-list.onrender.com/api/picklist",
+        "http://localhost:3000/api/picklist",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const picklists = await pickRes.json();
@@ -454,7 +454,7 @@ export default function Dashboard() {
       setActivities(sorted);
 
       const userRes = await fetch(
-        "https://pick-list.onrender.com/api/users"
+        "http://localhost:3000/api/users"
       );
       const users = await userRes.json();
 

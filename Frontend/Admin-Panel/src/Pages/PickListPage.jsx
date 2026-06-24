@@ -276,7 +276,7 @@ function AllPicklists({ refreshKey, showToast }) {
         return;
       }
 
-      const res = await fetch("https://pick-list.onrender.com/api/picklist", {
+      const res = await fetch("http://localhost:3000/api/picklist", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -458,7 +458,7 @@ const handleSubmit = async () => {
     };
 
     const res = await fetch(
-      "https://pick-list.onrender.com/api/picklist",
+      "http://localhost:3000/api/picklist",
       {
         method: "POST",
         headers: {

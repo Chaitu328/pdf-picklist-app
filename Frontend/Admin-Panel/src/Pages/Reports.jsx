@@ -153,7 +153,7 @@ export default function PickListDownload() {
 
     try {
       const res = await fetch(
-        "https://pick-list.onrender.com/api/picklist",
+        "http://localhost:3000/api/picklist",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -195,7 +195,7 @@ export default function PickListDownload() {
     setDownloading(true);
     try {
       const res = await fetch(
-        `https://pick-list.onrender.com/api/picklist/${picklistId}/report/excel`,
+        `http://localhost:3000/api/picklist/${picklistId}/report/excel`,
         {
           method: "GET",
           headers: {

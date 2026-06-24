@@ -362,7 +362,7 @@ function UploadTab({ onUploadSuccess }) {
       formData.append("file", file);
 
       const res = await fetch(
-        "https://pick-list.onrender.com/api/delivery-routes/import",
+        "http://localhost:3000/api/delivery-routes/import",
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -404,7 +404,7 @@ function UploadTab({ onUploadSuccess }) {
     try {
       setAddingRoutes(true);
       const res = await fetch(
-        "https://pick-list.onrender.com/api/delivery-routes",
+        "http://localhost:3000/api/delivery-routes",
         {
           method: "POST",
           headers: {
@@ -678,7 +678,7 @@ export default function Delivery() {
     try {
       setLoading(true);
       const res = await fetch(
-        "https://pick-list.onrender.com/api/delivery-routes",
+        "http://localhost:3000/api/delivery-routes",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
@@ -727,7 +727,7 @@ const handleDeleteRoutes = async () => {
 
     // 1. Fetch routes
     const resGet = await fetch(
-      "https://pick-list.onrender.com/api/delivery-routes",
+      "http://localhost:3000/api/delivery-routes",
       {
         headers: { Authorization: `Bearer ${token}` },
       }
@@ -769,7 +769,7 @@ const handleDeleteRoutes = async () => {
 
     // 4. Delete API
     const res = await fetch(
-      "https://pick-list.onrender.com/api/delivery-routes",
+      "http://localhost:3000/api/delivery-routes",
       {
         method: "DELETE",
         headers: {
