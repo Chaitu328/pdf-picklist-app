@@ -1,6 +1,7 @@
 const User = require("../Models/userModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const { recordUserSessionEvent } = require("../Services/userAuditService");
 
 // REGISTER
 const registerUser = async (req, res) => {
@@ -49,6 +50,7 @@ const registerUser = async (req, res) => {
 // LOGIN
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
+  console.log("[AUDIT DEBUG] loginUser entry:", { email });
 
   try {
 
@@ -69,6 +71,17 @@ const loginUser = async (req, res) => {
       process.env.JWT_SECRET_KEY,
       { expiresIn: "7d" }
     );
+
+    console.log("[AUDIT DEBUG] before recordUserSessionEvent:", {
+      userId: user._id,
+      role: user.role,
+      eventType: "login"
+    });
+    await recordUserSessionEvent({
+      userId: user._id,
+      role: user.role,
+      eventType: "login"
+    });
 
     res.status(200).json({
       message: "Login successful",

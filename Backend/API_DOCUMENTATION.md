@@ -8,7 +8,7 @@ This backend is a Node.js/Express API backed by MongoDB. It manages users, pickl
 
 - Default server port: `3000`
 - Production server URL: `https://pick-list.onrender.com`
-- Production API base URL: `https://pick-list.onrender.com/api`
+- Production API base URL: `http://localhost:3000/api`
 - Local development API base URL: `http://localhost:3000/api`
 - Auth type: JWT Bearer token
 - Token expiry: `7d`
@@ -18,9 +18,9 @@ This backend is a Node.js/Express API backed by MongoDB. It manages users, pickl
 
 Checked against the Render deployment:
 
-- `GET https://pick-list.onrender.com/api/picklist` returns `401` without a token, as expected.
-- `GET https://pick-list.onrender.com/api/delivery-routes` returns `401` without a token, as expected.
-- `GET https://pick-list.onrender.com/api/users` is publicly reachable, matching the current backend code.
+- `GET http://localhost:3000/api/picklist` returns `401` without a token, as expected.
+- `GET http://localhost:3000/api/delivery-routes` returns `401` without a token, as expected.
+- `GET http://localhost:3000/api/users` is publicly reachable, matching the current backend code.
 
 Authenticated create/update/download flows still need a valid manager or worker login to test end to end.
 
@@ -785,7 +785,7 @@ Frontend use: manager dashboard toast, notification list, shortage alert badge.
 ```js
 async function downloadReport(picklistId, token) {
   const response = await fetch(
-    `https://pick-list.onrender.com/api/picklist/${picklistId}/report/excel`,
+    `http://localhost:3000/api/picklist/${picklistId}/report/excel`,
     {
       headers: {
         Authorization: `Bearer ${token}`
@@ -807,7 +807,7 @@ async function downloadReport(picklistId, token) {
 
 ```js
 async function importDeliveryRoutes(file, token) {
-  const response = await fetch("https://pick-list.onrender.com/api/delivery-routes/import", {
+  const response = await fetch("http://localhost:3000/api/delivery-routes/import", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -823,7 +823,7 @@ async function importDeliveryRoutes(file, token) {
 ### Protected API Helper Example
 
 ```js
-const API_BASE_URL = "https://pick-list.onrender.com/api";
+const API_BASE_URL = "http://localhost:3000/api";
 
 async function apiFetch(path, token, options = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {

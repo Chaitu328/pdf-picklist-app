@@ -58,13 +58,24 @@ function Badge({ children, color = "gray", className = "" }) {
 
 function TimeBadge({ time, type = "login" }) {
   if (!time) return null;
+
   const isLogin = type === "login";
+
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium ${
-      isLogin ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
-    }`}>
-      {isLogin ? <LogIn className="w-3 h-3" /> : <LogOut className="w-3 h-3" />}
-      {new Date(time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium ${
+        isLogin
+          ? "bg-emerald-50 text-emerald-700"
+          : "bg-rose-50 text-rose-700"
+      }`}
+    >
+      {isLogin ? (
+        <LogIn className="w-3 h-3" />
+      ) : (
+        <LogOut className="w-3 h-3" />
+      )}
+
+      {time}
     </span>
   );
 }
@@ -193,8 +204,8 @@ function LoginTab({ data, date }) {
 
   const UserCard = ({ user, type }) => {
     const dayData = user.loginDetails?.[date] || {};
-    const loginTimes = dayData.loginTimes || [];
-    const logoutTimes = dayData.logoutTimes || [];
+   const loginTimes = dayData.loginTimings || [];
+const logoutTimes = dayData.logoutTimings || [];
     
     return (
       <Card className="p-5 hover:shadow-md transition-shadow">
@@ -740,7 +751,7 @@ export default function AuditDashboard() {
   const [loading, setLoading] = useState(true);
 
   const token = localStorage.getItem("token");
-  const BASE_URL = "https://pick-list.onrender.com";
+  const BASE_URL = "http://localhost:3000";
 
   const tabs = [
     { id: "login", label: "Login", icon: LogIn },

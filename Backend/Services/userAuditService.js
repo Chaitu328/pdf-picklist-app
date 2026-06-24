@@ -28,6 +28,7 @@ const ensureRoleDocument = async (role) => {
 };
 
 const recordUserSessionEvent = async ({ userId, role, eventType, at = new Date() }) => {
+  console.log("[AUDIT DEBUG] recordUserSessionEvent entry:", { userId, role, eventType, at });
   if (!userId || !role || !["login", "logout"].includes(eventType)) {
     return;
   }
@@ -67,7 +68,20 @@ const recordUserSessionEvent = async ({ userId, role, eventType, at = new Date()
     loginDetails.set(dateKey, dayEntry);
     userEntry.loginDetails = loginDetails;
     auditDoc.markModified("users");
+    console.log("[AUDIT DEBUG] before auditDoc.save:", {
+      auditId: auditDoc._id,
+      role: auditDoc.role,
+      userId,
+      dateKey,
+      dayEntry
+    });
     await auditDoc.save();
+    console.log("[AUDIT DEBUG] after auditDoc.save:", {
+      auditId: auditDoc._id,
+      role: auditDoc.role,
+      userId,
+      dateKey
+    });
   } catch (error) {
     console.error("User audit write failed:", error.message);
   }

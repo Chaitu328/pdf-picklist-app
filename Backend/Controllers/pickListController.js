@@ -1,4 +1,5 @@
 const PickList = require("../Models/pickListModel");
+const { recordPicklistAuditEvent } = require("../Services/picklistAuditService");
 
 // MANAGER CREATES PICKLIST
 const createPickList = async (req, res) => {
@@ -23,6 +24,11 @@ const createPickList = async (req, res) => {
       clientId,
       parts
     });
+    await recordPicklistAuditEvent({
+  eventType: "picklist_created",
+  actorId: req.user.id,
+  picklist: newPickList
+});
 
     res.status(201).json(newPickList);
   } catch (error) {
@@ -145,6 +151,11 @@ const assignPickList = async (req, res) => {
 
     picklist.status = "assigned";
     await picklist.save();
+    await recordPicklistAuditEvent({
+  eventType: "picklist_accepted",
+  actorId: workerId,
+  picklist
+});
 
     const populatedPicklist = await PickList.findById(picklist._id)
       .populate("clientId", "name email")
@@ -222,6 +233,15 @@ const updateScan = async (req, res) => {
 
     picklist.status = "processing";
     await picklist.save();
+    await recordPicklistAuditEvent({
+  eventType: "picklist_worked",
+  actorId: req.user.id,
+  picklist,
+  actionSummary: {
+    qrCount: entry_method === "QR" ? qtyToAdd : 0,
+    manualCount: entry_method === "Manual" ? qtyToAdd : 0
+  }
+});
 
     const populatedPicklist = await PickList.findById(picklist._id)
       .populate("clientId", "name email")
@@ -256,6 +276,11 @@ const proceedWithShortage = async (req, res) => {
 
     picklist.status = unscannedCount > 0 ? "completed_with_shortage" : "completed";
     await picklist.save();
+    await recordPicklistAuditEvent({
+  eventType: "picklist_worked",
+  actorId: req.user.id,
+  picklist
+});
 
     // Trigger instant WebSocket Notification to Admin if there is a shortage
     if (unscannedCount > 0) {
@@ -367,7 +392,13 @@ const deletePickListByNumber = async (req, res) => {
   try {
     const { pickListNumber } = req.params;
     if (!pickListNumber) return res.status(400).json({ message: "PickList number required." });
-    
+     const picklist = await PickList.findOne({ pick_list_no: pickListNumber });
+
+await recordPicklistAuditEvent({
+  eventType: "picklist_deleted",
+  actorId: req.user.id,
+  picklist
+});
     const deletedItem = await PickList.findOneAndDelete({ pick_list_no: pickListNumber });
     if (!deletedItem) return res.status(404).json({ message: `PickList ${pickListNumber} not found.` });
     
